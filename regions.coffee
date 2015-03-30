@@ -107,22 +107,20 @@ cuts = [
 
 regions = [[0,0,1,1]]
 
-cut = (regionId, orient, pct) ->
+cut = (regionId, orient, leftTop) ->
   # pull old region
   region = regions[regionId]
   throw new Error("invalid region: #{regionId}") unless region
-  [x,y,w,h] = region
+  [x1,y1,x2,y2] = region
 
   # delete region; we'll be replacing
   delete regions[regionId]
-  newRegions = [[x,y,w,h], [x,y,w,h]]
+  newRegions = [ [x1,y1,x2,y2], [x1,y1,x2,y2] ]
   switch orient
     when 'h'
-      newRegions[1][1] += newRegions[0][3] = h*pct
-      newRegions[1][3] *= (1-pct)
+      newRegions[0][3] = newRegions[1][1] = y1+(y2-y1)*leftTop
     when 'v'
-      newRegions[1][0] += newRegions[0][2] = w*pct
-      newRegions[1][2] *= (1-pct)
+      newRegions[0][2] = newRegions[1][0] = x1+(x2-x1)*leftTop
     else
       throw new Error("invalid orient #{orient}")
   regions.push newRegions...
