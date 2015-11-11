@@ -7,9 +7,9 @@
 
 return if window?
 
-self.onmessage = ({data: {w1, h1, w2, h2, dataBuffer, data2Buffer, extra}}) ->
-  data   = new Uint8ClampedArray dataBuffer
-  _data2 = new Uint8ClampedArray data2Buffer
+self.onmessage = ({data: {sw, sh, dw, dh, srcBuffer, dstBuffer, extra}}) ->
+  data   = new Uint8ClampedArray srcBuffer
+  _data2 = new Uint8ClampedArray dstBuffer
 
   # Instead, we enforce float type for every entity in the array
   # this prevents weird faded lines when things get rounded off
@@ -19,12 +19,12 @@ self.onmessage = ({data: {w1, h1, w2, h2, dataBuffer, data2Buffer, extra}}) ->
   alphas = Array(_data2.length >> 2)
   alphas.fill 1
   # this will always be between 0 and 1
-  xScale = w2 / w1
-  yScale = h2 / h1
+  xScale = dw / sw
+  yScale = dh / sh
 
-  for y1 in [0...h1]
-    self.postMessage { extra, progress: y1/h1 }
-    for x1 in [0...w1]
+  for y1 in [0...sh]
+    self.postMessage { extra, progress: y1/sh } unless y1 % 100
+    for x1 in [0...sw]
       extraX = false
       extraY = false
       targetX = Math.floor(x1 * xScale)
@@ -33,8 +33,8 @@ self.onmessage = ({data: {w1, h1, w2, h2, dataBuffer, data2Buffer, extra}}) ->
       yFactor = yScale
       bottomFactor = 0
       rightFactor = 0
-      offset = (y1 * w1 + x1) * 4
-      targetOffset = (targetY * w2 + targetX) * 4
+      offset = (y1 * sw + x1) * 4
+      targetOffset = (targetY * dw + targetX) * 4
       # Right side goes into another pixel 
       if targetX < Math.floor((x1 + 1) * xScale)
         rightFactor = (x1 + 1) * xScale % 1
@@ -65,26 +65,26 @@ self.onmessage = ({data: {w1, h1, w2, h2, dataBuffer, data2Buffer, extra}}) ->
         # the color of the visible pixels)
         alphas[alphaOffset + 1] -= (1 - a) * rightFactor * yFactor
       if extraY
-        data2[targetOffset + w2 * 4]     +=
+        data2[targetOffset + dw * 4]     +=
           data[offset]     * xFactor * bottomFactor * a
-        data2[targetOffset + w2 * 4 + 1] +=
+        data2[targetOffset + dw * 4 + 1] +=
           data[offset + 1] * xFactor * bottomFactor * a
-        data2[targetOffset + w2 * 4 + 2] +=
+        data2[targetOffset + dw * 4 + 2] +=
           data[offset + 2] * xFactor * bottomFactor * a
-        data2[targetOffset + w2 * 4 + 3] +=
+        data2[targetOffset + dw * 4 + 3] +=
           data[offset + 3] * xFactor * bottomFactor
-        alphas[alphaOffset + w2]         -=
+        alphas[alphaOffset + dw]         -=
           (1 - a)          * xFactor * bottomFactor
       if extraX and extraY
-        data2[targetOffset + w2 * 4 + 4] +=
+        data2[targetOffset + dw * 4 + 4] +=
           data[offset] * rightFactor * bottomFactor * a
-        data2[targetOffset + w2 * 4 + 5] +=
+        data2[targetOffset + dw * 4 + 5] +=
           data[offset + 1] * rightFactor * bottomFactor * a
-        data2[targetOffset + w2 * 4 + 6] +=
+        data2[targetOffset + dw * 4 + 6] +=
           data[offset + 2] * rightFactor * bottomFactor * a
-        data2[targetOffset + w2 * 4 + 7] +=
+        data2[targetOffset + dw * 4 + 7] +=
           data[offset + 3] * rightFactor * bottomFactor
-        alphas[alphaOffset + w2 + 1] -= (1 - a) * rightFactor * bottomFactor
+        alphas[alphaOffset + dw + 1] -= (1 - a) * rightFactor * bottomFactor
       data2[targetOffset]     += data[offset]     * xFactor * yFactor * a
       data2[targetOffset + 1] += data[offset + 1] * xFactor * yFactor * a
       data2[targetOffset + 2] += data[offset + 2] * xFactor * yFactor * a
@@ -106,4 +106,4 @@ self.onmessage = ({data: {w1, h1, w2, h2, dataBuffer, data2Buffer, extra}}) ->
   # re populate the actual imgData
   _data2[i] = Math.round(data2[i]) for i in [0...data2.length]
 
-  self.postMessage { extra, buffer: data2Buffer }, [data2Buffer]
+  self.postMessage { extra, buffer: dstBuffer }, [dstBuffer]

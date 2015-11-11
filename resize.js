@@ -13,22 +13,24 @@
   }
 
   self.onmessage = function(arg) {
-    var _data2, a, alphaOffset, alphas, bottomFactor, data, data2, data2Buffer, dataBuffer, extra, extraX, extraY, h1, h2, i, j, k, l, m, offset, ref, ref1, ref2, ref3, ref4, rightFactor, targetOffset, targetX, targetY, w1, w2, x1, xFactor, xScale, y1, yFactor, yScale;
-    ref = arg.data, w1 = ref.w1, h1 = ref.h1, w2 = ref.w2, h2 = ref.h2, dataBuffer = ref.dataBuffer, data2Buffer = ref.data2Buffer, extra = ref.extra;
-    data = new Uint8ClampedArray(dataBuffer);
-    _data2 = new Uint8ClampedArray(data2Buffer);
+    var _data2, a, alphaOffset, alphas, bottomFactor, data, data2, dh, dstBuffer, dw, extra, extraX, extraY, i, j, k, l, m, offset, ref, ref1, ref2, ref3, ref4, rightFactor, sh, srcBuffer, sw, targetOffset, targetX, targetY, x1, xFactor, xScale, y1, yFactor, yScale;
+    ref = arg.data, sw = ref.sw, sh = ref.sh, dw = ref.dw, dh = ref.dh, srcBuffer = ref.srcBuffer, dstBuffer = ref.dstBuffer, extra = ref.extra;
+    data = new Uint8ClampedArray(srcBuffer);
+    _data2 = new Uint8ClampedArray(dstBuffer);
     data2 = Array(_data2.length);
     data2.fill(0.0);
     alphas = Array(_data2.length >> 2);
     alphas.fill(1);
-    xScale = w2 / w1;
-    yScale = h2 / h1;
-    for (y1 = j = 0, ref1 = h1; 0 <= ref1 ? j < ref1 : j > ref1; y1 = 0 <= ref1 ? ++j : --j) {
-      self.postMessage({
-        extra: extra,
-        progress: y1 / h1
-      });
-      for (x1 = k = 0, ref2 = w1; 0 <= ref2 ? k < ref2 : k > ref2; x1 = 0 <= ref2 ? ++k : --k) {
+    xScale = dw / sw;
+    yScale = dh / sh;
+    for (y1 = j = 0, ref1 = sh; 0 <= ref1 ? j < ref1 : j > ref1; y1 = 0 <= ref1 ? ++j : --j) {
+      if (!(y1 % 100)) {
+        self.postMessage({
+          extra: extra,
+          progress: y1 / sh
+        });
+      }
+      for (x1 = k = 0, ref2 = sw; 0 <= ref2 ? k < ref2 : k > ref2; x1 = 0 <= ref2 ? ++k : --k) {
         extraX = false;
         extraY = false;
         targetX = Math.floor(x1 * xScale);
@@ -37,8 +39,8 @@
         yFactor = yScale;
         bottomFactor = 0;
         rightFactor = 0;
-        offset = (y1 * w1 + x1) * 4;
-        targetOffset = (targetY * w2 + targetX) * 4;
+        offset = (y1 * sw + x1) * 4;
+        targetOffset = (targetY * dw + targetX) * 4;
         if (targetX < Math.floor((x1 + 1) * xScale)) {
           rightFactor = (x1 + 1) * xScale % 1;
           xFactor -= rightFactor;
@@ -59,18 +61,18 @@
           alphas[alphaOffset + 1] -= (1 - a) * rightFactor * yFactor;
         }
         if (extraY) {
-          data2[targetOffset + w2 * 4] += data[offset] * xFactor * bottomFactor * a;
-          data2[targetOffset + w2 * 4 + 1] += data[offset + 1] * xFactor * bottomFactor * a;
-          data2[targetOffset + w2 * 4 + 2] += data[offset + 2] * xFactor * bottomFactor * a;
-          data2[targetOffset + w2 * 4 + 3] += data[offset + 3] * xFactor * bottomFactor;
-          alphas[alphaOffset + w2] -= (1 - a) * xFactor * bottomFactor;
+          data2[targetOffset + dw * 4] += data[offset] * xFactor * bottomFactor * a;
+          data2[targetOffset + dw * 4 + 1] += data[offset + 1] * xFactor * bottomFactor * a;
+          data2[targetOffset + dw * 4 + 2] += data[offset + 2] * xFactor * bottomFactor * a;
+          data2[targetOffset + dw * 4 + 3] += data[offset + 3] * xFactor * bottomFactor;
+          alphas[alphaOffset + dw] -= (1 - a) * xFactor * bottomFactor;
         }
         if (extraX && extraY) {
-          data2[targetOffset + w2 * 4 + 4] += data[offset] * rightFactor * bottomFactor * a;
-          data2[targetOffset + w2 * 4 + 5] += data[offset + 1] * rightFactor * bottomFactor * a;
-          data2[targetOffset + w2 * 4 + 6] += data[offset + 2] * rightFactor * bottomFactor * a;
-          data2[targetOffset + w2 * 4 + 7] += data[offset + 3] * rightFactor * bottomFactor;
-          alphas[alphaOffset + w2 + 1] -= (1 - a) * rightFactor * bottomFactor;
+          data2[targetOffset + dw * 4 + 4] += data[offset] * rightFactor * bottomFactor * a;
+          data2[targetOffset + dw * 4 + 5] += data[offset + 1] * rightFactor * bottomFactor * a;
+          data2[targetOffset + dw * 4 + 6] += data[offset + 2] * rightFactor * bottomFactor * a;
+          data2[targetOffset + dw * 4 + 7] += data[offset + 3] * rightFactor * bottomFactor;
+          alphas[alphaOffset + dw + 1] -= (1 - a) * rightFactor * bottomFactor;
         }
         data2[targetOffset] += data[offset] * xFactor * yFactor * a;
         data2[targetOffset + 1] += data[offset + 1] * xFactor * yFactor * a;
@@ -91,8 +93,8 @@
     }
     return self.postMessage({
       extra: extra,
-      buffer: data2Buffer
-    }, [data2Buffer]);
+      buffer: dstBuffer
+    }, [dstBuffer]);
   };
 
 }).call(this);

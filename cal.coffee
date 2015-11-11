@@ -1,7 +1,7 @@
 # calendar page: 3648x2736
 # src jpeg:      4608x3456
 
-cores         = navigator.hardwareConcurrency or 2
+numThreads    = navigator.hardwareConcurrency or 2
 calWidth      = 3648
 calFullHeight = 2736
 photoWidth    = 4608
@@ -19,20 +19,28 @@ imgs   = []
 paths  = ['05/DSC05391.JPG', '05/DSC05397.JPG', '05/DSC05402.JPG'
           '05/DSC05439.JPG', '05/IMG_20150501_072117555.jpg']
 
-workers = [1..cores].map ->
-  w = new Worker 'resize.js'
-  w.onmessage = (msg) ->
-    {extra:{x,y,w,h}, buffer, progress} = msg.data
-    if progress?
-      console.log {progress}
-      #prog = (pct) -> ctx.fillRect(dx, dy, dw, dh*pct)
-    else
-      console.log 'received scaled data for', {x,y,w,h}
-      img = new ImageData(new Uint8ClampedArray(buffer), w, h)
-      ctx.putImageData img, x, y
-  w
+workers = [1..numThreads].map -> new Worker 'resize.js'
 
-async =
+queueWorker = (task, cb) ->
+  {dw, dh} = task
+  console.log 'starting work for resize', task.extra
+  worker = workers.shift()
+  worker.onmessage = (msg) ->
+    {extra:{x,y}, buffer, progress} = msg.data
+    if progress?
+      #ctx.fillRect(x, y, dw, Math.floor(dh*progress))
+    else
+      console.log 'received scaled data for', {x,y}, "in #{Date.now()-start}ms"
+      img = new ImageData(new Uint8ClampedArray(buffer), dw, dh)
+      ctx.putImageData img, x, y
+      workers.push worker
+      cb()
+  start = Date.now()
+  worker.postMessage task, [task.srcBuffer, task.dstBuffer]
+
+queue = async.queue queueWorker, numThreads
+
+window.async ?=
   parallel: (fns, cb) ->
     done = 0
     len  = fns.length
@@ -47,9 +55,6 @@ scaleImage = (ctx, img, args...) ->
   [dx, dy, dw, dh] = args
   return ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh) unless smoothResize
 
-  console.log "resizing #{img.src}"
-  start = Date.now()
-
   src = document.createElement 'canvas'
   src.width  = sw
   src.height = sh
@@ -59,16 +64,8 @@ scaleImage = (ctx, img, args...) ->
   srcBuffer = srcCtx.getImageData(0, 0, sw, sh).data.buffer
   dstBuffer = (new ImageData(dw, dh)).data.buffer
                       
-  workers[nextWorker].postMessage {
-    w1:          sw
-    h1:          sh
-    w2:          dw
-    h2:          dh
-    dataBuffer:  srcBuffer
-    data2Buffer: dstBuffer
-    extra:       { x: dx, y: dy, w: dw, h: dh }
-  }, [srcBuffer, dstBuffer]
-  nextWorker = (nextWorker+1) % cores
+  console.log "queueing resize for #{img.src} -> #{dx},#{dy}"
+  queue.push { sw, sh, dw, dh, srcBuffer, dstBuffer, extra: { x: dx, y: dy } }
 
 imagesLoaded = ->
   console.log 'images loaded'
