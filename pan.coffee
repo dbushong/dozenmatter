@@ -17,40 +17,47 @@ metrics       = null
 |         | 4|5 |    |
 +---------+--+--+----+
 ###
-templates = []
+templates = [
+  [
+    { box: 0, left:  pct:    0.4763 }
+    { box: 1, top:   aspect: 4/3    }
+    { box: 2, right: aspect: 3/5    }
+    { box: 3, top:   aspect: 4/3    }
+    { box: 4, left:  pct:    0.5    }
+  ]
+  [] # dummy full-screen template
+]
 
-boxes = []
-boxes[0] = top: 0, left: 0, width: 2000, height: calHeight
+cutBox = (boxes, {box,top,left,bottom,right}) ->
+  {x, y, w, h} = boxes[box]
+  if pri=(left or right)
+    priW = Math.round(if pri.pct? then w * pri.pct else h * pri.aspect)
+    if left
+      box1 = { x,                       y, w: priW,                 h }
+      box2 = { x: x + priW + lineWidth, y, w: w - priW - lineWidth, h }
+    else
+      box1 = { x: x + w - priW,         y, w: priW,                 h }
+      box2 = { x,                       y, w: w - priW - lineWidth, h }
+  else
+    pri = top or bottom
+    priH = Math.round(if pri.pct? then h * pri.pct else w / pri.aspect)
+    if top
+      box1 = { x, y,                       w, h: priH                 }
+      box2 = { x, y: y + priH + lineWidth, w, h: h - priH - lineWidth }
+    else
+      box1 = { x, y: h - priH,             w, h: priH                 }
+      box2 = { x, y,                       w, h: h - priH - lineWidth }
 
-boxes[1] = top: 0, left: boxes[0].width + lineWidth
-boxes[1].width  = calWidth - boxes[1].left
-boxes[1].height = Math.round(boxes[1].width * 0.75)
+  boxes.splice box, 1
+  boxes.push box1, box2
 
-boxes[2] = top: boxes[1].height + lineWidth, width: 945
-boxes[2].height = calHeight - boxes[2].top
-boxes[2].left   = calWidth  - boxes[2].width
+for cuts, i in templates
+  boxes = [x: 0, y: 0, w: calWidth, h: calHeight]
+  cuts.forEach (cut) -> cutBox boxes, cut
+  templates[i] = boxes.map ({x,y,w,h}) ->
+    top: y+'px', left: x+'px', width: w+'px', height: h+'px'
 
-boxes[3] =
-  top: boxes[2].top
-  left: boxes[1].left
-  width: calWidth - boxes[0].width - boxes[2].width - 2 * lineWidth
-  height: 756
-
-boxes[4] =
-  top: boxes[1].height + boxes[3].height + 2 * lineWidth
-  left: boxes[3].left
-  width: 560
-boxes[4].height = calHeight - boxes[4].top
-
-boxes[5] =
-  top: boxes[4].top
-  left: boxes[4].left + boxes[4].width + lineWidth
-  width: calWidth-boxes[0].width - boxes[4].width - boxes[2].width - 3*lineWidth
-  height: boxes[4].height
-
-templates.push boxes
-
-templates.push [top: 0, left: 0, width: calWidth, height: calHeight]
+console.log templates
 
 generateConvert = ->
   "convert -size #{calWidth}x#{calFullHeight} xc:black " + (
@@ -61,18 +68,10 @@ generateConvert = ->
       -composite"
   ).join(' ') + ' out.png'
 
-addPx = (obj) ->
-  pxObj = {}
-  for k, v of obj
-    pxObj[k] = v
-    pxObj[k] += 'px' if v and 'number' is typeof v
-  pxObj
-
 loadTemplate = (i) ->
   metrics = {}
   $cal = $('#calendar').empty()
-  for box in templates[i]
-    $('<div>').css(addPx box).appendTo($cal)
+  $('<div>').css(box).appendTo($cal) for box in templates[i]
 
   $('#calendar > div').click (e) ->
     e.preventDefault()
