@@ -1,11 +1,11 @@
 {
   "name": "dozenmatter",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "makes our calendars",
   "repository": "dbushong/dozenmatter",
-  "author": "",
+  "author": "David Bushong <david@bushong.net>",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "coffee-script": "^1.10.0",
     "stylus": "^0.52.4"
   }

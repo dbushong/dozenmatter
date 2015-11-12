@@ -10,15 +10,9 @@
   cursor: move
   max-width: none
 
-$lineWidth     = 50px
-$bufferSize    = 75px
-$calWidth      = 4200px
-$calFullHeight = 3300px
-$calHeight     = $calFullHeight - $bufferSize
-
 #calendar
-  width:  $calWidth
-  height: $calFullHeight
+  width:  4200px
+  height: 3300px
   padding: 0
   position: relative
   background-color: black
@@ -26,48 +20,12 @@ $calHeight     = $calFullHeight - $bufferSize
   & > div
     margin: 0
     padding: 0
-    background-color: gray
+    background-color: #444
     position: absolute
+    cursor: pointer
 
-$box1Width = 2000px
-#box1
-  top: 0
-  left: 0
-  width: $box1Width
-  height: $calHeight
+    &:hover
+      background-color: #666
 
-$box2Width  = $calWidth - $box1Width - $lineWidth
-$box2Height = $box2Width / 1.33333333333
-#box2
-  top: 0
-  right: 0
-  width: $box2Width
-  height: $box2Height
-
-$box3Width = 945px
-#box3
-  bottom: $bufferSize
-  right: 0
-  width: $box3Width
-  height: $calHeight - $box2Height - $lineWidth
-
-$box4Height = 756px
-#box4
-  top: $box2Height + $lineWidth
-  left: $box1Width + $lineWidth
-  width: $calWidth - $box1Width - $box3Width - (2 * $lineWidth)
-  height: $box4Height
-
-$box5Width = 560px
-$box5Height = $calHeight - $box2Height - $box4Height - (2 * $lineWidth)
-#box5
-  bottom: $bufferSize
-  left: $box1Width + $lineWidth
-  width: $box5Width
-  height: $box5Height
-
-#box6
-  bottom: $bufferSize
-  right: $box3Width + $lineWidth
-  width: $calWidth - $box1Width - $box3Width - $box5Width - (3 * $lineWidth)
-  height: $box5Height
+input[type=file]
+  display: none
