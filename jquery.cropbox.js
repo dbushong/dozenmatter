@@ -55,7 +55,8 @@
               .append($('<button/>', { 'class' : 'cropZoomIn', 'type':'button' }).on('click', $.proxy(this.zoomIn, this)))
               .append($('<button/>', { 'class' : 'cropZoomOut', 'type':'button' }).on('click', $.proxy(this.zoomOut, this)));
 
-        this.$frame.append(this.options.controls || defaultControls);
+        if (this.options.controls !== false)
+          this.$frame.append(this.options.controls || defaultControls);
         this.updateOptions();
 
         if (typeof $.fn.hammer === 'function' || typeof Hammer !== 'undefined') {

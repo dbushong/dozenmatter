@@ -14,6 +14,7 @@
   width:  4200px
   height: 3300px
   padding: 0
+  margin-top: 20px
   position: relative
   background-color: black
 
@@ -27,5 +28,21 @@
     &:hover
       background-color: #666
 
+    body.deleting &:hover
+      background-color: #444
+      cursor: default
+      img
+        opacity: 0.3
+        cursor: pointer
+
 input[type=file]
+  display: none
+
+#delete
+  &:before
+    content: "Delete"
+  body.deleting &:before
+    content: "Cancel"
+
+#template
   display: none

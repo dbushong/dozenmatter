@@ -14,6 +14,7 @@
   width: 4200px;
   height: 3300px;
   padding: 0;
+  margin-top: 20px;
   position: relative;
   background-color: #000;
 }
@@ -27,6 +28,23 @@
 #calendar > div:hover {
   background-color: #666;
 }
+body.deleting #calendar > div:hover {
+  background-color: #444;
+  cursor: default;
+}
+body.deleting #calendar > div:hover img {
+  opacity: 0.3;
+  cursor: pointer;
+}
 input[type=file] {
+  display: none;
+}
+#delete:before {
+  content: "Delete";
+}
+body.deleting #delete:before {
+  content: "Cancel";
+}
+#template {
   display: none;
 }

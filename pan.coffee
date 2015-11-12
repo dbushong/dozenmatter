@@ -3,6 +3,8 @@ bufferSize    = 75
 calWidth      = 4200
 calFullHeight = 3300
 calHeight     = calFullHeight - bufferSize
+selectedBox   = null
+metrics       = null
 
 ###
 +---------+----------+
@@ -15,6 +17,8 @@ calHeight     = calFullHeight - bufferSize
 |         | 4|5 |    |
 +---------+--+--+----+
 ###
+templates = []
+
 boxes = []
 boxes[0] = top: 0, left: 0, width: 2000, height: calHeight
 
@@ -44,35 +48,55 @@ boxes[5] =
   width: calWidth-boxes[0].width - boxes[4].width - boxes[2].width - 3*lineWidth
   height: boxes[4].height
 
-metrics = {}
+templates.push boxes
+
+templates.push [top: 0, left: 0, width: calWidth, height: calHeight]
 
 generateConvert = ->
-  "convert -size #{calWidth}x#{calFullHeight} xc:black \\\n" + (
+  "convert -size #{calWidth}x#{calFullHeight} xc:black " + (
     for k,f of metrics
-      "  \\( #{f.name} \
+      "\\( #{f.name} \
       -crop #{f.crop.cropW}x#{f.crop.cropH}+#{f.crop.cropX}+#{f.crop.cropY} \
       -resize #{f.width}x#{f.height} \\) -geometry +#{f.pos.left}+#{f.pos.top} \
-      -composite \\\n"
-  ).join('') + '  out.png'
+      -composite"
+  ).join(' ') + ' out.png'
+
+addPx = (obj) ->
+  pxObj = {}
+  for k, v of obj
+    pxObj[k] = v
+    pxObj[k] += 'px' if v and 'number' is typeof v
+  pxObj
+
+loadTemplate = (i) ->
+  metrics = {}
+  $cal = $('#calendar').empty()
+  for box in templates[i]
+    $('<div>').css(addPx box).appendTo($cal)
+
+  $('#calendar > div').click (e) ->
+    e.preventDefault()
+    if $('body').hasClass 'deleting'
+      $(this).find('.cropFrame').remove()
+      pos = $(this).position()
+      delete metrics[[pos.left,pos.top]]
+      $('body').removeClass 'deleting'
+    else if $(this).find('img').length is 0
+      selectedBox = this
+      $('#file')[0].click()
 
 $ ->
-  for box in boxes
-    box[k] = "#{v}px" for k,v of box
-    $('<div>').css(box).appendTo('#calendar')
-
   $('#file').change ->
-    file = this.files[0]
+    file = @files[0]
     return unless file
     reader = new FileReader
     reader.onloadend = ->
       $box   = $(selectedBox)
       width  = $box.width()
-      console.log(width)
       height = $box.height()
       $img   = $('<img>').attr('src', reader.result).appendTo($box)
       pos    = $box.position()
-      key    = [pos.top,pos.left].join()
-      $box.css('cursor', 'default').off('click')
+      key    = [pos.left,pos.top].join()
       $img.cropbox(
         width:        width
         height:       height
@@ -81,12 +105,14 @@ $ ->
         showControls: 'never'
       ).on 'cropbox', (e, crop) ->
         metrics[key] = { crop, width, height, pos, name: file.name }
-        console.log generateConvert()
         
     reader.readAsDataURL file
 
-  selectedBox = null
-  $('#calendar > div').click (e) ->
-    selectedBox = this
-    e.preventDefault()
-    $('#file')[0].click()
+  $('#delete').click -> $('body').toggleClass 'deleting'
+
+  $('#export').click ->
+    prompt 'Paste this to your shell', generateConvert()
+
+  for template, i in templates
+    $('<option>').val(i).text("Template #{i+1}").appendTo('#template')
+  $('#template').show().change(-> loadTemplate @selectedIndex).change()
