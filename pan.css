@@ -1,0 +1,61 @@
+.cropFrame {
+  overflow: hidden;
+  position: relative;
+  display: inline-block;
+}
+.cropImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: move;
+  max-width: none;
+}
+#calendar {
+  width: 4200px;
+  height: 3300px;
+  padding: 0;
+  position: relative;
+  background-color: #000;
+}
+#calendar > div {
+  margin: 0;
+  padding: 0;
+  background-color: #808080;
+  position: absolute;
+}
+#box1 {
+  top: 0;
+  left: 0;
+  width: 2000px;
+  height: 3225px;
+}
+#box2 {
+  top: 0;
+  right: 0;
+  width: 2150px;
+  height: 1612.5000000040313px;
+}
+#box3 {
+  bottom: 75px;
+  right: 0;
+  width: 945px;
+  height: 1562.4999999959687px;
+}
+#box4 {
+  top: 1662.5000000040313px;
+  left: 2050px;
+  width: 1155px;
+  height: 756px;
+}
+#box5 {
+  bottom: 75px;
+  left: 2050px;
+  width: 560px;
+  height: 756.4999999959687px;
+}
+#box6 {
+  bottom: 75px;
+  right: 995px;
+  width: 545px;
+  height: 756.4999999959687px;
+}
