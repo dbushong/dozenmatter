@@ -57,12 +57,16 @@ for cuts, i in templates
   templates[i] = boxes.map ({x,y,w,h}) ->
     top: y+'px', left: x+'px', width: w+'px', height: h+'px'
 
-console.log templates
+escapeShellArg = (arg) ->
+  esc1 = "'" + arg.replace(/(['\\])/g,         '\\$1') + "'"
+  esc2 = '"' + arg.replace(/([!$"\\])/g,       '\\$1') + '"'
+  esc3 =       arg.replace(/([^\w=+:,.\/-])/g, '\\$1')
+  [esc1, esc2, esc3].sort((a,b) -> a.length - b.length)[0]
 
 generateConvert = ->
   "convert -size #{calWidth}x#{calFullHeight} xc:black " + (
     for k,f of metrics
-      "\\( #{f.name} \
+      "\\( #{escapeShellArg f.name} \
       -crop #{f.crop.cropW}x#{f.crop.cropH}+#{f.crop.cropX}+#{f.crop.cropY} \
       -resize #{f.width}x#{f.height} \\) -geometry +#{f.pos.left}+#{f.pos.top} \
       -composite"
@@ -99,7 +103,7 @@ $ ->
       $img.cropbox(
         width:        width
         height:       height
-        zoom:         10
+        zoom:         100
         controls:     false
         showControls: 'never'
       ).on 'cropbox', (e, crop) ->

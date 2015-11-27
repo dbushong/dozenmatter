@@ -34,7 +34,7 @@ body.deleting #calendar > div:hover {
 }
 body.deleting #calendar > div:hover img {
   opacity: 0.3;
-  cursor: pointer;
+  cursor: not-allowed;
 }
 input[type=file] {
   display: none;
