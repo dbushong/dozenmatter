@@ -296,3 +296,5 @@
   });
 
 }).call(this);
+
+//# sourceMappingURL=pan.js.map
