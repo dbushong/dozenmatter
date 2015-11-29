@@ -66,14 +66,65 @@ escapeShellArg = (arg) ->
   esc3 =       arg.replace(/([^\w=+:,.\/-])/g, '\\$1')
   [esc1, esc2, esc3].sort((a,b) -> a.length - b.length)[0]
 
+convertDSLToCLI = (cmds) ->
+  return cmds.map(convertDSLToCLI).join(' ') if cmds instanceof Array
+  if 'object' is typeof cmds
+    (for k, v of cmds
+      if v is true
+        "-#{k}"
+      else if v is false
+        "+#{k}"
+      else if 'object' is typeof v
+        wh = xy = ''
+        wh = "#{v.w}x#{v.h}"  if v.w? and v.h?
+        xy = "+#{v.x}+#{v.y}" if v.x? and v.y?
+        "-#{k} #{wh}#{xy}"
+      else
+        "-#{k} #{escapeShellArg v}"
+    ).join(' ')
+  else
+    cmds
+
 generateConvert = ->
   "convert -size #{calWidth}x#{calFullHeight} xc:black " + (
     for k,f of metrics
-      "\\( #{escapeShellArg f.name} \
-      -normalize \
-      -crop #{f.crop.cropW}x#{f.crop.cropH}+#{f.crop.cropX}+#{f.crop.cropY} \
-      -resize #{f.width}x#{f.height} \\) -geometry +#{f.pos.left}+#{f.pos.top} \
-      -composite"
+      caption = ''
+      if f.caption
+        caption = "\
+          \\( \
+            -background none \
+            -size #{Math.round(f.width * 0.85)}x500 \
+            -stroke none \
+            -fill white \
+            -font ../../fonts/MyriadPro-Bold.otf \
+            label:#{escapeShellArg f.caption} \
+            -trim \
+            \\( \
+              +clone \
+              -background black \
+              -shadow 100x10+0+0 \
+              -level '0,25%' \
+              +channel \
+            \\) \
+            +swap \
+            -background none \
+            -layers merge \
+            +repage \
+          \\) \
+          -gravity south \
+          -geometry +0+3 \
+          -composite \
+        "
+      "\\( \
+         #{escapeShellArg f.name} \
+         -normalize \
+         -crop #{f.crop.cropW}x#{f.crop.cropH}+#{f.crop.cropX}+#{f.crop.cropY} \
+         -resize #{f.width}x#{f.height} #{caption} \
+       \\) \
+       -gravity northwest \
+       -geometry +#{f.pos.left}+#{f.pos.top} \
+       -composite \
+      "
   ).join(' ') + ' out.png'
 
 loadTemplate = (i) ->
