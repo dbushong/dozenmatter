@@ -18,14 +18,16 @@ metrics       = null
 +---------+--+--+----+
 ###
 templates = [
-  [
-    { box: 0, left:  pct:    0.4763 }
-    { box: 1, top:   aspect: 4/3    }
-    { box: 2, right: aspect: 3/5    }
-    { box: 3, top:   aspect: 4/3    }
-    { box: 4, left:  pct:    0.5    }
-  ]
-  [] # dummy full-screen template
+  { cuts:
+    [
+      { box: 0, left:  pct:    0.4763 }
+      { box: 1, top:   aspect: 4/3    }
+      { box: 2, right: aspect: 3/5    }
+      { box: 3, top:   aspect: 4/3    }
+      { box: 4, left:  pct:    0.5    }
+    ]
+  }
+  { cuts: [], buffer: 'top' } # dummy fullscreen template
 ]
 
 cutBox = (boxes, {box,top,left,bottom,right}) ->
@@ -51,9 +53,10 @@ cutBox = (boxes, {box,top,left,bottom,right}) ->
   boxes.splice box, 1
   boxes.push box1, box2
 
-for cuts, i in templates
-  boxes = [x: 0, y: 0, w: calWidth, h: calHeight]
-  cuts.forEach (cut) -> cutBox boxes, cut
+for tmpl, i in templates
+  y     = if tmpl.buffer is 'top' then bufferSize else 0
+  boxes = [{x: 0, y, w: calWidth, h: calHeight}]
+  tmpl.cuts.forEach (cut) -> cutBox boxes, cut
   templates[i] = boxes.map ({x,y,w,h}) ->
     top: y+'px', left: x+'px', width: w+'px', height: h+'px'
 
@@ -67,6 +70,7 @@ generateConvert = ->
   "convert -size #{calWidth}x#{calFullHeight} xc:black " + (
     for k,f of metrics
       "\\( #{escapeShellArg f.name} \
+      -normalize \
       -crop #{f.crop.cropW}x#{f.crop.cropH}+#{f.crop.cropX}+#{f.crop.cropY} \
       -resize #{f.width}x#{f.height} \\) -geometry +#{f.pos.left}+#{f.pos.top} \
       -composite"
