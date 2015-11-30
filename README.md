@@ -18,6 +18,12 @@ Usage:
 * navigate to `file:///path/to/dozenmatter/index.html`
 * profit
 
+Develop:
+
+* npm install
+* ./node_modules/.bin/coffee -cw pan.coffee
+* ./node_modules/.bin/stylus -w pan.stylus
+
 Credits:
 
 * uses jquery
