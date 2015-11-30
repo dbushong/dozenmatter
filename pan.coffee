@@ -125,8 +125,8 @@ for tmpl, i in templates
     top: y+'px', left: x+'px', width: w+'px', height: h+'px'
 
 escapeShellArg = (arg) ->
-  esc1 = "'" + arg.replace(/(['\\])/g,         '\\$1') + "'"
-  esc2 = '"' + arg.replace(/([!$"\\])/g,       '\\$1') + '"'
+  esc1 = "'" + arg.replace(/\\/g,        '\\\\').replace(/'/g, "'\\''") + "'"
+  esc2 = '"' + arg.replace(/([!$"\\])/g, '\\$1')                        + '"'
   esc3 =       arg.replace(/([^\w=+:,.\/-])/g, '\\$1')
   [esc1, esc2, esc3].sort((a,b) -> a.length - b.length)[0]
 

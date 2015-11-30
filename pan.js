@@ -343,7 +343,7 @@
 
   escapeShellArg = function(arg) {
     var esc1, esc2, esc3;
-    esc1 = "'" + arg.replace(/(['\\])/g, '\\$1') + "'";
+    esc1 = "'" + arg.replace(/\\/g, '\\\\').replace(/'/g, "'\\''") + "'";
     esc2 = '"' + arg.replace(/([!$"\\])/g, '\\$1') + '"';
     esc3 = arg.replace(/([^\w=+:,.\/-])/g, '\\$1');
     return [esc1, esc2, esc3].sort(function(a, b) {
