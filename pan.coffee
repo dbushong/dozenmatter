@@ -1,5 +1,5 @@
 lineWidth     = 50
-bufferSize    = 75
+bufferSize    = 120
 calWidth      = 4200
 calFullHeight = 3300
 calHeight     = calFullHeight - bufferSize
