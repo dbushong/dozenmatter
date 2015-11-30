@@ -6,27 +6,28 @@ calHeight     = calFullHeight - bufferSize
 selectedBox   = null
 metrics       = null
 
-###
+### Template 1,2,3,7
 +---------+----------+
 |         |          |
 |         |    1     |
 |         +-----+----+
 |    0    |  3  |    |
 |         +--+--+    |
-|         |  |  | 2  |
-|         | 4|5 |    |
+|         |  |5 | 2  |
+|         | 4|6 |    |
 +---------+--+--+----+
+#   Template 4,5,6
++----------+---------+
+|          |         |
+|    1     |         |
++----+-----+         |
+|    |  3  |    0    |
+|    +--+--+         |
+| 2  |  |5 |         |
+|    | 4|6 |         |
++----+--+--+---------+
 ###
 templates = [
-  { cuts:
-    [
-      { box: 0, left:  pct:    0.4763 }
-      { box: 1, top:   aspect: 4/3    }
-      { box: 2, right: aspect: 3/5    }
-      { box: 3, top:   aspect: 4/3    }
-      { box: 4, left:  pct:    0.5    }
-    ]
-  }
   { cuts:
     [
       { box: 0, left:  pct: 0.4818 }
@@ -83,11 +84,11 @@ templates = [
   }
   {
     cuts: [
-      { box: 0, left:  pct:    0.4763 }
-      { box: 1, top:   aspect: 4/3    }
-      { box: 2, right: aspect: 3/5    }
-      { box: 3, top:   aspect: 4/3    }
-      { box: 4, left:  pct:    0.5    }
+      { box: 0, left:  pct: 0.4818 }
+      { box: 1, top:   pct: 0.4891 }
+      { box: 2, right: pct: 0.4432 }
+      { box: 3, top:   pct: 0.48   }
+      { box: 4, left:  pct: 0.48   }
     ]
     buffer: 'top'
   }
