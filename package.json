@@ -6,11 +6,12 @@
   "author": "David Bushong <david@bushong.net>",
   "license": "ISC",
   "scripts": {
-    "watch-coffee": "coffee -cmw pan.coffee",
     "watch-stylus": "stylus -w pan.styl"
   },
   "devDependencies": {
-    "coffee-script": "^1.10.0",
+    "eslint": "^2.13.1",
+    "eslint-config-groupon": "^3.2.0",
+    "eslint-plugin-import": "^1.16.0",
     "stylus": "^0.52.4"
   }
 }
