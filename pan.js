@@ -253,6 +253,7 @@
     $('#file').change(function onChange() {
       const file = this.files[0];
       if (!file) return;
+      $('#file').val('');
       const reader = new FileReader;
       reader.onloadend = () => {
         const $box = $(selectedBox);
