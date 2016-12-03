@@ -8,7 +8,7 @@
 
   calWidth = 4200;
 
-  calFullHeight = 3300;
+  calFullHeight = 3250;
 
   calHeight = calFullHeight - bufferSize;
 
@@ -236,11 +236,6 @@
           top: {
             pct: 0.48
           }
-        }, {
-          box: 4,
-          left: {
-            pct: 0.48
-          }
         }
       ],
       buffer: 'top'
@@ -447,7 +442,7 @@
         return $img.cropbox({
           width: width,
           height: height,
-          zoom: 100,
+          zoom: 65e7 / width / height,
           controls: false,
           showControls: 'never'
         }).on('cropbox', function(e, crop) {
@@ -478,5 +473,3 @@
   });
 
 }).call(this);
-
-//# sourceMappingURL=pan.js.map

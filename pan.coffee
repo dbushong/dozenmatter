@@ -1,7 +1,7 @@
 lineWidth     = 50
 bufferSize    = 120
 calWidth      = 4200
-calFullHeight = 3300
+calFullHeight = 3250
 calHeight     = calFullHeight - bufferSize
 selectedBox   = null
 metrics       = null
@@ -88,7 +88,6 @@ templates = [
       { box: 1, top:   pct: 0.4891 }
       { box: 2, right: pct: 0.4432 }
       { box: 3, top:   pct: 0.48   }
-      { box: 4, left:  pct: 0.48   }
     ]
     buffer: 'top'
   }
@@ -222,7 +221,7 @@ $ ->
       $img.cropbox(
         width:        width
         height:       height
-        zoom:         100
+        zoom:         65e7/width/height
         controls:     false
         showControls: 'never'
       ).on 'cropbox', (e, crop) ->

@@ -28,3 +28,29 @@ Credits:
 
 * uses jquery
 * uses https://github.com/acornejo/jquery-cropbox with some tweaks & fixes
+
+
+======================================
+Notes on How to Use
+
+Templates are in `pan.coffee`
+
+Run:
+./node_modules/.bin/coffee -cw pan.coffee
+
+to watch the file for changes and recompile
+
+
+Gimp Text Settings:
+* Myriad Pro Bold
+* 72 pt
+* White
+* Centered
+* Draw a text box before typing
+
+Gimp Drop Shadow Settings:
+* 30px @ 100%
+* 60px @  90%
+* 90px @  80%
+
+
