@@ -1,11 +1,13 @@
+# dozenmatter
 This is a utility to simplify matting a bunch of photos (or other images).
 
 Current limitations:
 
-* only one (or a few) layout templates available
+* only a few layout templates available
 * doesn't actually save the final result (huge canvases are iffy)
 * no saving
 * always on black
+* needs a recent browser with ES2015+ support (recent Chrome or Firefox should be fine)
 
 Features:
 
@@ -14,15 +16,14 @@ Features:
 
 Usage:
 
-* git clone
+* `$ git clone`
 * navigate to `file:///path/to/dozenmatter/index.html`
 * profit
 
 Develop:
 
-* npm install
-* ./node_modules/.bin/coffee -cw pan.coffee
-* ./node_modules/.bin/stylus -w pan.stylus
+* `$ npm install`
+* `$ npm run watch-stylus`
 
 Credits:
 
@@ -30,27 +31,18 @@ Credits:
 * uses https://github.com/acornejo/jquery-cropbox with some tweaks & fixes
 
 
-======================================
-Notes on How to Use
+---
 
-Templates are in `pan.coffee`
+#### Notes for use/future features
 
-Run:
-./node_modules/.bin/coffee -cw pan.coffee
-
-to watch the file for changes and recompile
-
-
-Gimp Text Settings:
-* Myriad Pro Bold
-* 72 pt
-* White
-* Centered
-* Draw a text box before typing
-
-Gimp Drop Shadow Settings:
-* 30px @ 100%
-* 60px @  90%
-* 90px @  80%
-
-
+* Templates are in `pan.js`
+* Gimp Text Settings:
+  * Myriad Pro Bold
+  * 72 pt
+  * White
+  * Centered
+  * Draw a text box before typing
+* Gimp Drop Shadow Settings:
+  * 30px @ 100%
+  * 60px @  90%
+  * 90px @  80%
