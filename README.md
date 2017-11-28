@@ -46,3 +46,5 @@ Credits:
   * 30px @ 100%
   * 60px @  90%
   * 90px @  80%
+* CSS Drop Shadow: https://codepen.io/dbushong/pen/vWVKPx
+* Look into generating OpenRaster file instead of PNG: https://github.com/zsgalusz/ora.js
