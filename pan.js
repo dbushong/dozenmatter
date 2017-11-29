@@ -233,6 +233,7 @@
       e.preventDefault();
       if ($('body').hasClass('deleting')) {
         $(this).find('.cropFrame').remove();
+        $(this).find('textarea').remove();
         const pos = $(this).position();
         delete metrics[[pos.left, pos.top]];
         $('body').removeClass('deleting');
