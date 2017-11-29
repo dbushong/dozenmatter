@@ -266,7 +266,9 @@
         }).on('cropbox', (e, crop) => (
           metrics[key] = { crop, width, height, pos, name: file.name }
         ));
-        $('<textarea>').appendTo($box);
+        $('<textarea>').appendTo($box).on('keypress', function onKeyPress() {
+          metrics[key].caption = $(this).val();
+        });
       };
       reader.readAsDataURL(file);
     });
