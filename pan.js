@@ -182,29 +182,37 @@
       const f = metrics[k];
       let caption = '';
       if (f.caption) {
+        const txt = f.caption.trim().replace(/\n/g, '\\n');
         caption = oneLine`
           \\(
             -background none
-            -size ${Math.round(f.width * 0.85)}x500
+            -size ${Math.round(f.width * 0.85)}x225
+            xc:none
             -stroke none
             -fill white
-            -font ../../fonts/MyriadPro-Bold.otf
-            label:${escapeShellArg(f.caption)}
-            -trim
+            -gravity south
+            -annotate 0 ${escapeShellArg(txt)}
+            -fill black
             \\(
               +clone
-              -background black
-              -shadow 100x10+0+0
-              -level '0,25%'
-              +channel
+              -shadow 100x6+0+0
             \\)
             +swap
-            -background none
+            \\(
+              +clone
+              -shadow 90x12+0+0
+            \\)
+            +swap
+            \\(
+              +clone
+              -shadow 80x20+0+0
+            \\)
+            +swap
             -layers merge
             +repage
           \\)
           -gravity south
-          -geometry +0+3
+          -geometry +0+0
           -composite
         `;
       }
@@ -220,7 +228,13 @@
       `;
     }).join(' ');
     return oneLine`
-      convert -size ${calWidth}x${calFullHeight} xc:black ${metricsArgs} out.png
+      convert
+        -size ${calWidth}x${calFullHeight}
+        -font ../../fonts/MyriadPro-Bold.otf
+        -pointsize 72
+        xc:black
+        ${metricsArgs}
+        out.png
     `.trim();
   }
 
