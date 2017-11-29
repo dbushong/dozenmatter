@@ -2,17 +2,11 @@
 
 (() => {
   const lineWidth = 50;
-
   const bufferSize = 120;
-
   const calWidth = 4200;
-
   const calFullHeight = 3250;
-
   const calHeight = calFullHeight - bufferSize;
-
   let selectedBox = null;
-
   let metrics = null;
 
 
@@ -271,6 +265,7 @@
         }).on('cropbox', (e, crop) => (
           metrics[key] = { crop, width, height, pos, name: file.name }
         ));
+        $('<textarea>').appendTo($box);
       };
       reader.readAsDataURL(file);
     });

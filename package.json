@@ -12,6 +12,6 @@
     "eslint": "^2.13.1",
     "eslint-config-groupon": "^3.2.0",
     "eslint-plugin-import": "^1.16.0",
-    "stylus": "^0.52.4"
+    "stylus": "^0.54.5"
   }
 }
