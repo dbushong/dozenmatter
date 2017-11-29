@@ -266,7 +266,7 @@
         }).on('cropbox', (e, crop) => (
           metrics[key] = { crop, width, height, pos, name: file.name }
         ));
-        $('<textarea>').appendTo($box).on('keypress', function onKeyPress() {
+        $('<textarea>').appendTo($box).on('change', function onTAChange() {
           metrics[key].caption = $(this).val();
         });
       };
