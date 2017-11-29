@@ -141,34 +141,10 @@
   });
 
   function escapeShellArg(arg) {
-    const esc1 = `'${arg.replace(/\\/g, '\\\\').replace(/'/g, "'\\''")}'`;
+    const esc1 = `'${arg.replace(/'/g, "'\\''")}'`;
     const esc2 = `"${arg.replace(/([!$"\\])/g, '\\$1')}"`;
     const esc3 = arg.replace(/([^\w=+:,.\/-])/g, '\\$1');
     return [esc1, esc2, esc3].sort((a, b) => a.length - b.length)[0];
-  }
-
-  // eslint-disable-next-line no-unused-vars
-  function convertDSLToCLI(cmds) {
-    if (cmds instanceof Array) return cmds.map(convertDSLToCLI).join(' ');
-    if (typeof cmds !== 'object') return cmds;
-
-    return Object.keys(cmds).map(k => {
-      const v = cmds[k];
-      if (v === true) return `-${k}`;
-      if (v === false) return `+${k}`;
-      if (typeof v === 'object') {
-        let wh = '';
-        let xy = '';
-        if ((v.w != null) && (v.h != null)) {
-          wh = `${v.w}x${v.h}`;
-        }
-        if ((v.x != null) && (v.y != null)) {
-          xy = `+${v.x}+${v.y}`;
-        }
-        return `-${k} ${wh}${xy}`;
-      }
-      return `-${k} ${escapeShellArg(v)}`;
-    }).join(' ');
   }
 
   function oneLine(strs, ...vals) {
