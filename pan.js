@@ -235,6 +235,7 @@
   }
 
   $(() => {
+    let taIdCnt = 1;
     $('#file').change(function onChange() {
       const file = this.files[0];
       if (!file) return;
@@ -256,16 +257,26 @@
         }).on('cropbox', (e, crop) => (
           metrics[key] = { crop, width, height, pos, name: file.name }
         ));
-        $('<textarea>').appendTo($box).on('change', function onTAChange() {
+        $('<textarea>')
+        .attr('id', 'ta'+taIdCnt++)
+        .appendTo($box)
+        .on('change', function onTAChange() {
           metrics[key].caption = $(this).val();
+        })
+        .on('keyup', function onTAKeyup() {
+          console.log($(this), $(this).attr('id'), $(this).height());
+          $(this).height(5);
+          $(this).height(document.getElementById($(this).attr('id')).scrollHeight+10);
         });
       };
       reader.readAsDataURL(file);
     });
     $('#delete').click(() => { $('body').toggleClass('deleting'); });
     $('#export').click(() => {
+      const result = generateConvert();
       // eslint-disable-next-line no-alert
-      prompt('Paste this to your shell', generateConvert());
+      prompt('Paste this to your shell', result);
+      console.log(result); // eslint-disable-line no-console
     });
     templates.forEach((template, i) => {
       $('<option>').val(i).text(`Template ${i + 1}`).appendTo('#template');
