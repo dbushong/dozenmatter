@@ -264,7 +264,6 @@
           metrics[key].caption = $(this).val();
         })
         .on('keyup', function onTAKeyup() {
-          console.log($(this), $(this).attr('id'), $(this).height());
           $(this).height(5);
           $(this).height(document.getElementById($(this).attr('id')).scrollHeight+10);
         });
