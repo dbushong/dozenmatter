@@ -1,3 +1,14 @@
+$outWidth = 4200px
+$outHeight = 3250px
+$displayScale = 0.25
+
+body
+  background-color: black
+  padding: 0
+  margin: 0 15px
+  width: 1050px // $outWidth * $displayScale + 15px
+  height: 813px // $outHeight * $displayScale + 15px
+
 .cropFrame
   overflow: hidden
   position: relative
@@ -11,12 +22,14 @@
   max-width: none
 
 #calendar
-  width:  4200px
-  height: 3250px
+  width:  $outWidth
+  height: $outHeight
   padding: 0
   margin-top: 20px
   position: relative
   background-color: black
+  transform-origin: top left
+  transform: scale($displayScale)
 
   & > div
     margin: 0

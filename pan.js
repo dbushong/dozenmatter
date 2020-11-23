@@ -1,5 +1,7 @@
 'use strict';
 
+const { ipcRenderer } = require('electron');
+
 (() => {
   const lineWidth = 50;
   const bufferSize = 120;
@@ -8,7 +10,6 @@
   const calHeight = calFullHeight - bufferSize;
   let selectedBox = null;
   let metrics = null;
-
 
   /* Template 1,2,3,7
   +---------+----------+
@@ -96,16 +97,36 @@
     },
     {
       cuts: [
-        { box: 0, left:  { pct: 0.4818 } },
-        { box: 1, top:   { pct: 0.4891 } },
+        { box: 0, left: { pct: 0.4818 } },
+        { box: 1, top: { pct: 0.4891 } },
         { box: 2, right: { pct: 0.4432 } },
-        { box: 3, top:   { pct: 0.48   } },
+        { box: 3, top: { pct: 0.48 } },
       ],
       name: 'Cover (Left)',
       buffer: 'top',
     },
   ];
   /* eslint-enable */
+
+  function loadTemplate(i) {
+    metrics = {};
+    const $cal = $('#calendar').empty();
+    templates[i].boxes.forEach(box => $('<div>').css(box).appendTo($cal));
+
+    $('#calendar > div').click(function onClick(e) {
+      e.preventDefault();
+      if ($('body').hasClass('deleting')) {
+        $(this).find('.cropFrame').remove();
+        $(this).find('textarea').remove();
+        const pos = $(this).position();
+        delete metrics[[pos.left, pos.top]];
+        $('body').removeClass('deleting');
+      } else if ($(this).find('img').length === 0) {
+        selectedBox = this;
+        $('#file')[0].click();
+      }
+    });
+  }
 
   function cutBox(boxes, { box, bottom, top, left, right }) {
     const { x, y, w, h } = boxes[box];
@@ -116,21 +137,21 @@
     if (pri) {
       const priW = Math.round(pri.pct ? w * pri.pct : h * pri.aspect);
       if (left) {
-        box1 = { x,                       y, w: priW,                 h };
+        box1 = { x, y, w: priW, h };
         box2 = { x: x + priW + lineWidth, y, w: w - priW - lineWidth, h };
       } else {
-        box1 = { x: x + w - priW,         y, w: priW,                 h };
-        box2 = { x,                       y, w: w - priW - lineWidth, h };
+        box1 = { x: x + w - priW, y, w: priW, h };
+        box2 = { x, y, w: w - priW - lineWidth, h };
       }
     } else {
       pri = top || bottom;
       const priH = Math.round(pri.pct ? h * pri.pct : w / pri.aspect);
       if (top) {
-        box1 = { x, y,                       w, h: priH };
+        box1 = { x, y, w, h: priH };
         box2 = { x, y: y + priH + lineWidth, w, h: h - priH - lineWidth };
       } else {
-        box1 = { x, y: h - priH,             w, h: priH };
-        box2 = { x, y,                       w, h: h - priH - lineWidth };
+        box1 = { x, y: h - priH, w, h: priH };
+        box2 = { x, y, w, h: h - priH - lineWidth };
       }
     }
     /* eslint-enable */
@@ -168,7 +189,7 @@
   function oneLine(strs, ...vals) {
     vals.push('');
     return strs.map(s => `${s.replace(/\n[\n\s]*/g, ' ')}${vals.shift()}`)
-             .join('');
+      .join('');
   }
 
   function generateConvert() {
@@ -232,74 +253,56 @@
     `.trim();
   }
 
-  function loadTemplate(i) {
-    metrics = {};
-    const $cal = $('#calendar').empty();
-    templates[i].boxes.forEach(box => $('<div>').css(box).appendTo($cal));
-
-    $('#calendar > div').click(function onClick(e) {
-      e.preventDefault();
-      if ($('body').hasClass('deleting')) {
-        $(this).find('.cropFrame').remove();
-        $(this).find('textarea').remove();
-        const pos = $(this).position();
-        delete metrics[[pos.left, pos.top]];
-        $('body').removeClass('deleting');
-      } else if ($(this).find('img').length === 0) {
-        selectedBox = this;
-        $('#file')[0].click();
-      }
-    });
-  }
-
   $(() => {
     let taIdCnt = 1;
-    $('#file').change(function onChange() {
+    $('#file').change(() => {
       const file = this.files[0];
       if (!file) return;
       $('#file').val('');
-      const reader = new FileReader;
-      reader.onloadend = () => {
-        const $box = $(selectedBox);
-        const width = $box.width();
-        const height = $box.height();
-        const $img = $('<img>').attr('src', reader.result).appendTo($box);
-        const pos = $box.position();
-        const key = [pos.left, pos.top].join();
-        $img.cropbox({
-          width,
-          height,
-          zoom: 65e7 / width / height,
-          controls: false,
-          showControls: 'never',
-        }).on('cropbox', (e, crop) => (
-          metrics[key] = { crop, width, height, pos, name: file.name }
-        ));
-        $('<textarea>')
-        .attr('id', 'ta'+taIdCnt++)
+      const $box = $(selectedBox);
+      const width = $box.width();
+      const height = $box.height();
+      const $img = $('<img>').attr('src', file.path).appendTo($box);
+      const pos = $box.position();
+      const key = [pos.left, pos.top].join();
+      $img.cropbox({
+        width,
+        height,
+        zoom: 65e7 / width / height,
+        controls: false,
+        showControls: 'never',
+      }).on('cropbox', (e, crop) => (
+        metrics[key] = { crop, width, height, pos, name: file.name }
+      ));
+      $('<textarea>')
+        .attr('id', `ta${taIdCnt++}`)
         .appendTo($box)
         .on('change', function onTAChange() {
           metrics[key].caption = $(this).val();
         })
         .on('keyup', function onTAKeyup() {
           $(this).height(5);
-          $(this).height(document.getElementById($(this).attr('id')).scrollHeight+10);
+          $(this).height(document.getElementById($(this).attr('id')).scrollHeight + 10);
         });
-      };
-      reader.readAsDataURL(file);
     });
-    $('#delete').click(() => { $('body').toggleClass('deleting'); });
-    $('#export').click(() => {
-      const result = generateConvert();
-      // eslint-disable-next-line no-alert
-      prompt('Paste this to your shell', result);
-      console.log(result); // eslint-disable-line no-console
-    });
-    templates.forEach(({ name }, i) => {
-      $('<option>').val(i).text(name).appendTo('#template');
-    });
-    $('#template').show()
-      .change(function onChange() { loadTemplate(this.selectedIndex); })
-      .change();
+
+    loadTemplate(0);
+  });
+
+  ipcRenderer.on('remove', () => {
+    // TODO: disable the "Remove" menu item?
+    $('body').toggleClass('deleting');
+  });
+
+  ipcRenderer.on('template', (sender, num) => {
+    loadTemplate(num - 1);
+  });
+
+  ipcRenderer.on('export', () => {
+    $('#notice').text('Paste this to your shell', generateConvert());
+  });
+
+  ipcRenderer.on('new', () => {
+    $('#notice').text(`Clicked "New" at ${new Date()}`);
   });
 })();

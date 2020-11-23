@@ -4,11 +4,14 @@
   "description": "makes our calendars",
   "repository": "dbushong/dozenmatter",
   "author": "David Bushong <david@bushong.net>",
-  "license": "ISC",
+  "license": "MIT",
+  "main": "main.js",
   "scripts": {
-    "watch-stylus": "stylus -w pan.styl"
+    "watch-stylus": "stylus -w pan.styl",
+    "start": "electron ."
   },
   "devDependencies": {
+    "electron": "^11.0.2",
     "eslint": "^2.13.1",
     "eslint-config-groupon": "^3.2.0",
     "eslint-plugin-import": "^1.16.0",

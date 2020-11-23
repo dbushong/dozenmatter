@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Dozen Matter</title>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="pan.css">
-  </head>
-  <body>
-    <button id="delete"></button>
-    <button id="export">Export</button>
-    <select id="template"></select>
-    <div id="calendar"></div>
-    <input type="file" id="file">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.js"></script>
-    <script src="jquery.cropbox.js"></script>
-    <script src="pan.js"></script>  
-  </body>
+
+<head>
+  <title>Dozen Matter</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="pan.css">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+</head>
+
+<body>
+  <div id="notice"></div>
+  <div id="calendar"></div>
+  <input type="file" id="file">
+  <script src="vendor/jquery.min.js"></script>
+  <script src="vendor/jquery.mousewheel.js"></script>
+  <script src="vendor/jquery.cropbox.js"></script>
+  <script src="pan.js"></script>
+</body>
+
 </html>
