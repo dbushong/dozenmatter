@@ -1,5 +1,6 @@
 {
   "name": "dozenmatter",
+  "productName": "DozenMatter",
   "version": "1.0.0",
   "description": "makes our calendars",
   "repository": "dbushong/dozenmatter",
@@ -12,6 +13,7 @@
   },
   "devDependencies": {
     "electron": "^11.0.2",
+    "electron-packager": "^15.1.0",
     "eslint": "^2.13.1",
     "eslint-config-groupon": "^3.2.0",
     "eslint-plugin-import": "^1.16.0",
