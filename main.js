@@ -7,6 +7,10 @@ const prompt = require('electron-prompt');
 
 const templates = require('./templates');
 
+const WIDTH = 4200;
+const HEIGHT = 3250;
+const SCALE = 0.252;
+
 function enableSave() {
   Menu.getApplicationMenu().getMenuItemById('save').enabled = true;
 }
@@ -14,8 +18,8 @@ ipcMain.on('enableSave', enableSave);
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1090,
-    height: 858,
+    width: Math.ceil(WIDTH * SCALE),
+    height: Math.floor((HEIGHT + 100) * SCALE),
     webPreferences: {
       nodeIntegration: true,
     },
@@ -36,12 +40,11 @@ function templateMenuItems(win) {
   }));
 }
 
-const filters = [{ name: 'JSON Configs', extensions: ['json'] }];
-
+const configFilters = [{ name: 'JSON Configs', extensions: ['json'] }];
 async function handleSaveConfigAs(win) {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Save Matte Config',
-    filters,
+    filters: configFilters,
   });
   if (!canceled) {
     await win.webContents.send('saveAs', filePath);
@@ -52,13 +55,21 @@ async function handleSaveConfigAs(win) {
 async function handleLoadConfig(win) {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
     title: 'Load Matte Config',
-    filters,
+    filters: configFilters,
     properties: ['openFile'],
   });
   if (!canceled) {
     await win.webContents.send('load', filePaths[0]);
     enableSave();
   }
+}
+
+async function handleRender(win) {
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+    title: 'Export as PNG',
+    filters: [{ name: 'PNG files', extensions: ['png'] }],
+  });
+  if (!canceled) await win.webContents.send('render', filePath);
 }
 
 async function handleChangeFont(win) {
@@ -72,12 +83,11 @@ async function handleChangeFont(win) {
 }
 
 function createMenus(win) {
-  ipcMain.on('infoBox', (ev, { title, message }) => {
+  ipcMain.on('infoBox', (ev, opts) => {
     dialog.showMessageBox(win, {
       type: 'info',
-      title,
-      message,
       buttons: ['OK'],
+      ...opts,
     });
   });
 
@@ -95,7 +105,7 @@ function createMenus(win) {
         { type: 'separator' },
 
         {
-          label: 'Open Matte Config',
+          label: 'Open Matte Config...',
           id: 'load',
           accelerator: 'CommandOrControl+O',
           click: () => handleLoadConfig(win),
@@ -107,7 +117,19 @@ function createMenus(win) {
           accelerator: 'CommandOrControl+S',
           click: () => win.webContents.send('save'),
         },
-        { label: 'Save Matte Config As...', id: 'saveAs', click: () => handleSaveConfigAs(win) },
+        {
+          label: 'Save Matte Config As...',
+          id: 'saveAs',
+          click: () => handleSaveConfigAs(win),
+        },
+
+        { type: 'separator' },
+
+        {
+          label: 'Render as PNG...',
+          accelerator: 'CommandOrControl+R',
+          click: () => handleRender(win),
+        },
 
         { type: 'separator' },
 

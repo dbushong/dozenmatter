@@ -1,6 +1,8 @@
 'use strict';
 
 const { writeFileSync, readFileSync } = require('fs');
+const { promisify } = require('util');
+const exec = promisify(require('child_process').exec);
 
 const { ipcRenderer, clipboard } = require('electron');
 
@@ -222,7 +224,7 @@ const templates = require('./templates');
       .join('');
   }
 
-  function generateConvert() {
+  function generateConvert(outFile = 'out.png') {
     const metricsArgs = Object.values(metrics).map(f => {
       let caption = '';
       if (f.caption) {
@@ -278,8 +280,24 @@ const templates = require('./templates');
         -pointsize 72
         xc:black
         ${metricsArgs}
-        out.png
+        ${escapeShellArg(outFile)}
     `.trim();
+  }
+
+  async function runConvert(outFile) {
+    // TODO: change command generator to return array, and escape on-the-fly
+    // instead of using exec() here
+    try {
+      flashNotice(`Rendering PNG to ${outFile}, please wait...`);
+      await exec(generateConvert(outFile));
+      flashNotice(`Rendered PNG to ${outFile}`);
+    } catch (err) {
+      ipcRenderer.send('infoBox',
+        {
+          title: 'Rendering Error',
+          message: `Error running convert command: ${err.message}`,
+        });
+    }
   }
 
   $(() => {
@@ -330,5 +348,9 @@ const templates = require('./templates');
     fontFamily = ff;
     autoSaveConfig();
     $('textarea').css('fontFamily', fontFamily);
+  });
+
+  ipcRenderer.on('render', async (ev, filePath) => {
+    await runConvert(filePath);
   });
 })();
