@@ -7,6 +7,9 @@ const prompt = require('electron-prompt');
 
 const templates = require('./templates');
 
+const isMac = process.platform === 'darwin';
+
+
 const WIDTH = 4200;
 const HEIGHT = 3250;
 const SCALE = 0.252;
@@ -92,6 +95,9 @@ function createMenus(win) {
   });
 
   Menu.setApplicationMenu(Menu.buildFromTemplate([
+    ...(isMac ? [{
+      role: 'appMenu',
+    }] : []),
     {
       id: 'file',
       label: 'File',
@@ -131,9 +137,11 @@ function createMenus(win) {
           click: () => handleRender(win),
         },
 
-        { type: 'separator' },
+        ...(isMac ? [] : [
+          { type: 'separator' },
 
-        { role: 'quit' },
+          { role: 'quit' },
+        ]),
       ],
     },
 
