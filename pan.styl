@@ -6,8 +6,22 @@ body
   background-color: black
   padding: 0
   margin: 0 15px
-  width: 1050px // $outWidth * $displayScale + 15px
-  height: 813px // $outHeight * $displayScale + 15px
+  width: $outWidth * $displayScale
+  height: $outHeight * $displayScale
+
+#notice
+  position: fixed
+  top: 0
+  background-color: white
+  padding: 5px
+  opacity: 0
+  transition: opacity 500ms
+  width: 100%
+  text-align: center
+  z-index: 1
+
+  &.shown
+    opacity: 1
 
 .cropFrame
   overflow: hidden

@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, Menu, BrowserWindow } = require('electron');
+const { app, Menu, BrowserWindow, ipcMain, dialog } = require('electron');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -18,6 +18,15 @@ function createWindow() {
 
 
 function createMenus(win) {
+  ipcMain.on('infoBox', (ev, { title, message }) => {
+    dialog.showMessageBox(win, {
+      type: 'info',
+      title,
+      message,
+      buttons: ['OK'],
+    });
+  });
+
   function sendFn(...args) {
     return () => win.webContents.send(...args);
   }
@@ -35,7 +44,7 @@ function createMenus(win) {
         { label: 'Save Matte Config', id: 'save', enabled: false, click: sendFn('save') },
         { label: 'Save Matte Config As...', id: 'saveAs', enabled: false, click: sendFn('saveAs') },
         { type: 'separator' },
-        { label: 'Export as PNG', id: 'export', enabled: false, click: sendFn('export') },
+        { label: 'Export as PNG', id: 'export', click: sendFn('export') },
         { type: 'separator' },
         { role: 'quit' },
       ],

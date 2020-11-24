@@ -1,6 +1,6 @@
 'use strict';
 
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, clipboard } = require('electron');
 
 (() => {
   const lineWidth = 50;
@@ -107,6 +107,13 @@ const { ipcRenderer } = require('electron');
     },
   ];
   /* eslint-enable */
+
+  let noticeHideTimer;
+  function flashNotice(txt) {
+    clearTimeout(noticeHideTimer);
+    $('#notice').text(txt).toggleClass('shown', true);
+    noticeHideTimer = setTimeout(() => $('#notice').toggleClass('shown', false), 2000);
+  }
 
   function loadTemplate(i) {
     metrics = {};
@@ -245,7 +252,7 @@ const { ipcRenderer } = require('electron');
     return oneLine`
       convert
         -size ${calWidth}x${calFullHeight}
-        -font ../../fonts/MyriadPro-Bold.otf
+        -font fonts/MyriadPro-Bold.otf
         -pointsize 72
         xc:black
         ${metricsArgs}
@@ -255,8 +262,8 @@ const { ipcRenderer } = require('electron');
 
   $(() => {
     let taIdCnt = 1;
-    $('#file').change(() => {
-      const file = this.files[0];
+    $('#file').change(e => {
+      const file = e.target.files[0];
       if (!file) return;
       $('#file').val('');
       const $box = $(selectedBox);
@@ -299,10 +306,11 @@ const { ipcRenderer } = require('electron');
   });
 
   ipcRenderer.on('export', () => {
-    $('#notice').text('Paste this to your shell', generateConvert());
+    clipboard.writeText(generateConvert(), 'selection');
+    flashNotice('Copyed convert command to clipboard');
   });
 
   ipcRenderer.on('new', () => {
-    $('#notice').text(`Clicked "New" at ${new Date()}`);
+    flashNotice(`Clicked "New" at ${new Date()}`);
   });
 })();
