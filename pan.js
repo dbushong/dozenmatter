@@ -49,6 +49,7 @@ const templates = require('./templates');
       metrics,
       curTemplate,
       saveFile,
+      fontFamily,
       savedAt: new Date().toISOString(),
     });
     // console.log('autoSaveConfig', json);
@@ -118,6 +119,7 @@ const templates = require('./templates');
       autoSaveConfig();
     });
     const $ta = $('<textarea>')
+      .css('fontFamily', fontFamily)
       .appendTo($box)
       .on('keyup', function onTAKeyup() {
         resetCaptionHeight(this);
@@ -272,7 +274,7 @@ const templates = require('./templates');
     return oneLine`
       convert
         -size ${calWidth}x${calFullHeight}
-        -font fonts/MyriadPro-Bold.otf
+        -font ${fontFamily.replace(/\s+/g, '')}-Bold
         -pointsize 72
         xc:black
         ${metricsArgs}
@@ -322,5 +324,11 @@ const templates = require('./templates');
 
   ipcRenderer.on('load', (ev, filePath) => {
     loadConfigFromFile(filePath);
+  });
+
+  ipcRenderer.on('font', (ev, ff) => {
+    fontFamily = ff;
+    autoSaveConfig();
+    $('textarea').css('fontFamily', fontFamily);
   });
 })();

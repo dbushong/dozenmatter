@@ -3,6 +3,7 @@
 const { join: pathJoin } = require('path');
 
 const { app, Menu, BrowserWindow, ipcMain, dialog } = require('electron');
+const prompt = require('electron-prompt');
 
 const templates = require('./templates');
 
@@ -58,6 +59,15 @@ async function handleLoadConfig(win) {
     await win.webContents.send('load', filePaths[0]);
     enableSave();
   }
+}
+
+async function handleChangeFont(win) {
+  const fontFamily = await prompt({
+    title: 'Select Font Family',
+    label: 'Font Family:',
+    type: 'input',
+  }, win);
+  if (fontFamily) win.webContents.send('font', fontFamily);
 }
 
 function createMenus(win) {
@@ -125,7 +135,7 @@ function createMenus(win) {
 
         {
           label: 'Change Caption Font',
-          click: () => win.webContents.send('font'),
+          click: () => handleChangeFont(win),
         },
       ],
     },
