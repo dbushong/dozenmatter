@@ -1,6 +1,10 @@
 'use strict';
 
+const { writeFileSync, readFileSync } = require('fs');
+
 const { ipcRenderer, clipboard } = require('electron');
+
+const templates = require('./templates');
 
 /* eslint-disable no-console */
 
@@ -13,6 +17,7 @@ const { ipcRenderer, clipboard } = require('electron');
   let selectedBox = null;
   let metrics = null;
   let curTemplate = null;
+  let saveFile = null;
 
   /* Template 1,2,3,7
   +---------+----------+
@@ -36,91 +41,14 @@ const { ipcRenderer, clipboard } = require('electron');
   +----+--+--+---------+
    */
 
-  /* eslint-disable key-spacing,no-multi-spaces,indent */
-  const templates = [
-    {
-      cuts:
-        [
-          { box: 0, left: { pct: 0.4818 } },
-          { box: 1, top: { pct: 0.4891 } },
-          { box: 2, right: { pct: 0.4432 } },
-          { box: 3, top: { pct: 0.48 } },
-          { box: 4, left: { pct: 0.48 } },
-        ],
-      name: 'Left, 6 Boxes',
-    },
-    {
-      cuts:
-        [
-          { box: 0, left: { pct: 0.4818 } },
-          { box: 1, top: { pct: 0.4891 } },
-          { box: 2, right: { pct: 0.4432 } },
-          { box: 3, top: { pct: 0.48 } },
-          { box: 4, left: { pct: 0.48 } },
-          { box: 5, top: { pct: 0.47 } },
-        ],
-      name: 'Left, 7 Boxes',
-    },
-    {
-      cuts:
-        [
-          { box: 0, left: { pct: 0.4818 } },
-          { box: 1, top: { pct: 0.4891 } },
-          { box: 2, right: { pct: 0.4432 } },
-          { box: 3, top: { pct: 0.48 } },
-        ],
-      name: 'Left, 5 Boxes',
-    },
-    {
-      cuts:
-        [
-          { box: 0, right: { pct: 0.4818 } },
-          { box: 1, top: { pct: 0.4891 } },
-          { box: 2, left: { pct: 0.4432 } },
-          { box: 3, top: { pct: 0.48 } },
-          { box: 4, right: { pct: 0.48 } },
-        ],
-      name: 'Right, 6 Boxes',
-    },
-    {
-      cuts:
-        [
-          { box: 0, right: { pct: 0.4818 } },
-          { box: 1, top: { pct: 0.4891 } },
-          { box: 2, left: { pct: 0.4432 } },
-          { box: 3, top: { pct: 0.48 } },
-          { box: 4, right: { pct: 0.48 } },
-          { box: 5, top: { pct: 0.47 } },
-        ],
-      name: 'Right, 7 Boxes',
-    },
-    {
-      cuts:
-        [
-          { box: 0, right: { pct: 0.4818 } },
-          { box: 1, top: { pct: 0.4891 } },
-          { box: 2, left: { pct: 0.4432 } },
-          { box: 3, top: { pct: 0.48 } },
-        ],
-      name: 'Right, 5 Boxes',
-    },
-    {
-      cuts: [
-        { box: 0, left: { pct: 0.4818 } },
-        { box: 1, top: { pct: 0.4891 } },
-        { box: 2, right: { pct: 0.4432 } },
-        { box: 3, top: { pct: 0.48 } },
-      ],
-      name: 'Cover (Left)',
-      buffer: 'top',
-    },
-  ];
-  /* eslint-enable */
 
   const AUTO_SAVE = 'autoSave';
-  function autoSave() {
+  function autoSaveConfig() {
     localStorage.setItem(AUTO_SAVE, JSON.stringify({
-      metrics, curTemplate, savedAt: new Date().toISOString(),
+      metrics,
+      curTemplate,
+      saveFile,
+      savedAt: new Date().toISOString(),
     }));
   }
 
@@ -129,6 +57,14 @@ const { ipcRenderer, clipboard } = require('electron');
     clearTimeout(noticeHideTimer);
     $('#notice').text(txt).toggleClass('shown', true);
     noticeHideTimer = setTimeout(() => $('#notice').toggleClass('shown', false), 2000);
+  }
+
+  function saveConfigToFile() {
+    const settingsJSON = JSON.stringify(
+      JSON.parse(localStorage.getItem(AUTO_SAVE)), null, 2
+    );
+    writeFileSync(saveFile, settingsJSON);
+    flashNotice(`Config saved to ${saveFile}`);
   }
 
   function loadTemplate(i) {
@@ -145,7 +81,7 @@ const { ipcRenderer, clipboard } = require('electron');
         $(this).find('.cropFrame').remove();
         $(this).find('textarea').remove();
         delete metrics[$(this).attr('id')];
-        autoSave();
+        autoSaveConfig();
         $('body').removeClass('deleting');
       } else if ($(this).find('img').length === 0) {
         selectedBox = $(this).attr('id');
@@ -170,13 +106,13 @@ const { ipcRenderer, clipboard } = require('electron');
       result: metrics[key] && metrics[key].crop,
     }).on('cropbox', (ce, crop) => {
       metrics[key] = { crop, width, height, pos: $box.position(), name: path };
-      autoSave();
+      autoSaveConfig();
     });
     $('<textarea>')
       .appendTo($box)
       .on('change', function onTAChange() {
         metrics[key].caption = $(this).val();
-        autoSave();
+        autoSaveConfig();
       })
       .on('keyup', function onTAKeyup() {
         $(this).height(5);
@@ -187,20 +123,27 @@ const { ipcRenderer, clipboard } = require('electron');
   function loadSettings(settings) {
     ({ curTemplate } = settings);
     loadTemplate(curTemplate);
-    ({ metrics } = settings);
+    ({ metrics, saveFile } = settings);
     for (const [id, { name }] of Object.entries(metrics)) {
       selectedBox = id;
       loadFileToBox(name);
     }
+    if (saveFile) ipcRenderer.send('enableSave');
   }
 
-  function autoLoad() {
+  function autoLoadConfig() {
     const settingsJSON = localStorage.getItem(AUTO_SAVE);
     if (!settingsJSON) return false;
     const settings = JSON.parse(settingsJSON);
     console.log(`Loading settings saved at ${settings.savedAt}`);
     loadSettings(settings);
     return true;
+  }
+
+  function loadConfigFromFile(filePath) {
+    const settings = JSON.parse(readFileSync(filePath, 'utf8'));
+    console.log(`Loading settings from ${filePath}`);
+    loadSettings(settings);
   }
 
   function cutBox(boxes, { box, bottom, top, left, right }) {
@@ -335,26 +278,40 @@ const { ipcRenderer, clipboard } = require('electron');
       loadFileToBox(file.path);
     });
 
-    if (!autoLoad()) loadTemplate(0);
+    if (!autoLoadConfig()) loadTemplate(0);
   });
 
   ipcRenderer.on('remove', () => {
-    // TODO: disable the "Remove" menu item?
-    $('body').toggleClass('deleting');
+    // TODO: disable the "Remove" menu item when deleting or no open images?
+    $('body').toggleClass('deleting', true);
+    flashNotice('Select box to remove image from');
   });
 
-  ipcRenderer.on('template', (sender, num) => {
-    loadTemplate(num - 1);
-    autoSave();
+  ipcRenderer.on('template', (sender, i) => {
+    loadTemplate(i);
+    autoSaveConfig();
   });
 
   ipcRenderer.on('export', () => {
     clipboard.writeText(generateConvert(), 'selection');
-    flashNotice('Copyed convert command to clipboard');
+    flashNotice('Copied convert command to clipboard');
   });
 
   ipcRenderer.on('new', () => {
     loadTemplate(0);
-    autoSave();
+    saveFile = null;
+    autoSaveConfig();
+  });
+
+  ipcRenderer.on('saveAs', (ev, filePath) => {
+    saveFile = filePath;
+    autoSaveConfig();
+    saveConfigToFile();
+  });
+
+  ipcRenderer.on('save', saveConfigToFile);
+
+  ipcRenderer.on('load', (ev, filePath) => {
+    loadConfigFromFile(filePath);
   });
 })();
