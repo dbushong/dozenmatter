@@ -18,6 +18,7 @@ const templates = require('./templates');
   let metrics = null;
   let curTemplate = null;
   let saveFile = null;
+  let fontFamily = 'Arial';
 
   /* Template 1,2,3,7
   +---------+----------+
@@ -44,12 +45,14 @@ const templates = require('./templates');
 
   const AUTO_SAVE = 'autoSave';
   function autoSaveConfig() {
-    localStorage.setItem(AUTO_SAVE, JSON.stringify({
+    const json = JSON.stringify({
       metrics,
       curTemplate,
       saveFile,
       savedAt: new Date().toISOString(),
-    }));
+    });
+    // console.log('autoSaveConfig', json);
+    localStorage.setItem(AUTO_SAVE, json);
   }
 
   let noticeHideTimer;
@@ -60,9 +63,10 @@ const templates = require('./templates');
   }
 
   function saveConfigToFile() {
-    const settingsJSON = JSON.stringify(
-      JSON.parse(localStorage.getItem(AUTO_SAVE)), null, 2
-    );
+    autoSaveConfig();
+    const json = localStorage.getItem(AUTO_SAVE);
+    // console.log('saveConfigToFile', json);
+    const settingsJSON = JSON.stringify(JSON.parse(json), null, 2);
     writeFileSync(saveFile, settingsJSON);
     flashNotice(`Config saved to ${saveFile}`);
   }
@@ -90,13 +94,18 @@ const templates = require('./templates');
     });
   }
 
+  function resetCaptionHeight(e) {
+    $(e).height(5);
+    $(e).height(e.scrollHeight + 10);
+  }
+
   function loadFileToBox(path) {
     const $box = $(`#${selectedBox}`);
-    console.log($box[0]);
     const width = $box.width();
     const height = $box.height();
     const $img = $('<img>').attr('src', path).appendTo($box);
     const key = $box.attr('id');
+    const pos = $box.position();
     $img.cropbox({
       width,
       height,
@@ -105,23 +114,24 @@ const templates = require('./templates');
       showControls: 'never',
       result: metrics[key] && metrics[key].crop,
     }).on('cropbox', (ce, crop) => {
-      metrics[key] = { crop, width, height, pos: $box.position(), name: path };
+      metrics[key] = { ...metrics[key], crop, width, height, pos, name: path };
       autoSaveConfig();
     });
-    $('<textarea>')
+    const $ta = $('<textarea>')
       .appendTo($box)
-      .on('change', function onTAChange() {
+      .on('keyup', function onTAKeyup() {
+        resetCaptionHeight(this);
         metrics[key].caption = $(this).val();
         autoSaveConfig();
-      })
-      .on('keyup', function onTAKeyup() {
-        $(this).height(5);
-        $(this).height(document.getElementById($(this).attr('id')).scrollHeight + 10);
       });
+    if (metrics[key]) {
+      $ta.val(metrics[key].caption);
+      resetCaptionHeight($ta[0]);
+    }
   }
 
   function loadSettings(settings) {
-    ({ curTemplate } = settings);
+    ({ curTemplate, fontFamily } = settings);
     loadTemplate(curTemplate);
     ({ metrics, saveFile } = settings);
     for (const [id, { name }] of Object.entries(metrics)) {
@@ -305,7 +315,6 @@ const templates = require('./templates');
 
   ipcRenderer.on('saveAs', (ev, filePath) => {
     saveFile = filePath;
-    autoSaveConfig();
     saveConfigToFile();
   });
 

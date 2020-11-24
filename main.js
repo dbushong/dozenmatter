@@ -103,26 +103,38 @@ function createMenus(win) {
         { role: 'quit' },
       ],
     },
+
     {
       label: 'Edit',
       submenu: [
         {
           label: 'Copy Convert Command',
-          id: 'export',
           accelerator: 'CommandOrControl+C',
           click: () => win.webContents.send('export'),
         },
 
+        { type: 'separator' },
+
+        {
+          label: 'Remove Image',
+          id: 'remove',
+          click: () => win.webContents.send('remove'),
+        },
+
+        { type: 'separator' },
+
+        {
+          label: 'Change Caption Font',
+          click: () => win.webContents.send('font'),
+        },
       ],
     },
+
     {
       label: 'Template',
-      submenu: [
-        { label: 'Remove Image', id: 'remove', click: () => win.webContents.send('remove') },
-        { type: 'separator' },
-        ...templateMenuItems(win),
-      ],
+      submenu: templateMenuItems(win),
     },
+
     ...(app.isPackaged ? [] : [{
       label: 'Developer',
       submenu: [
