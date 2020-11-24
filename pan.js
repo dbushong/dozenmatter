@@ -2,6 +2,8 @@
 
 const { ipcRenderer, clipboard } = require('electron');
 
+/* eslint-disable no-console */
+
 (() => {
   const lineWidth = 50;
   const bufferSize = 120;
@@ -10,6 +12,7 @@ const { ipcRenderer, clipboard } = require('electron');
   const calHeight = calFullHeight - bufferSize;
   let selectedBox = null;
   let metrics = null;
+  let curTemplate = null;
 
   /* Template 1,2,3,7
   +---------+----------+
@@ -108,6 +111,13 @@ const { ipcRenderer, clipboard } = require('electron');
   ];
   /* eslint-enable */
 
+  const AUTO_SAVE = 'autoSave';
+  function autoSave() {
+    localStorage.setItem(AUTO_SAVE, JSON.stringify({
+      metrics, curTemplate, savedAt: new Date().toISOString(),
+    }));
+  }
+
   let noticeHideTimer;
   function flashNotice(txt) {
     clearTimeout(noticeHideTimer);
@@ -117,22 +127,66 @@ const { ipcRenderer, clipboard } = require('electron');
 
   function loadTemplate(i) {
     metrics = {};
+    curTemplate = i;
     const $cal = $('#calendar').empty();
-    templates[i].boxes.forEach(box => $('<div>').css(box).appendTo($cal));
 
     $('#calendar > div').click(function onClick(e) {
       e.preventDefault();
       if ($('body').hasClass('deleting')) {
         $(this).find('.cropFrame').remove();
         $(this).find('textarea').remove();
-        const pos = $(this).position();
-        delete metrics[[pos.left, pos.top]];
+        delete metrics[$(this).attr('id')];
+        autoSave();
         $('body').removeClass('deleting');
       } else if ($(this).find('img').length === 0) {
-        selectedBox = this;
+        selectedBox = $(this).attr('id');
         $('#file')[0].click();
       }
     });
+  }
+
+  function loadFileToBox(path) {
+    const $box = $(selectedBox);
+    const width = $box.width();
+    const height = $box.height();
+    const $img = $('<img>').attr('src', path).appendTo($box);
+    const key = $box.attr('id');
+    $img.cropbox({
+      width,
+      height,
+      zoom: 65e7 / width / height,
+      controls: false,
+      showControls: 'never',
+    }).on('cropbox', (ce, crop) => {
+      metrics[key] = { crop, width, height, pos: $box.pos(), name: path };
+      autoSave();
+    });
+    $('<textarea>')
+      .appendTo($box)
+      .on('change', function onTAChange() {
+        metrics[key].caption = $(this).val();
+        autoSave();
+      })
+      .on('keyup', function onTAKeyup() {
+        $(this).height(5);
+        $(this).height(document.getElementById($(this).attr('id')).scrollHeight + 10);
+      });
+  }
+
+  function loadSettings(settings) {
+    ({ curTemplate } = settings);
+    loadTemplate(curTemplate);
+    ({ metrics } = settings);
+    Object.values(metrics);
+  }
+
+  function autoLoad() {
+    const settingsJSON = localStorage.getItem(AUTO_SAVE);
+    if (!settingsJSON) return false;
+    const settings = JSON.parse(settingsJSON);
+    console.log(`Loading settings saved at ${settings.savedAt}`);
+    loadSettings(settings);
+    return true;
   }
 
   function cutBox(boxes, { box, bottom, top, left, right }) {
@@ -200,8 +254,7 @@ const { ipcRenderer, clipboard } = require('electron');
   }
 
   function generateConvert() {
-    const metricsArgs = Object.keys(metrics).map(k => {
-      const f = metrics[k];
+    const metricsArgs = Object.values(metrics).map(f => {
       let caption = '';
       if (f.caption) {
         const txt = f.caption.trim().replace(/\n/g, '\\n');
@@ -261,39 +314,14 @@ const { ipcRenderer, clipboard } = require('electron');
   }
 
   $(() => {
-    let taIdCnt = 1;
     $('#file').change(e => {
       const file = e.target.files[0];
       if (!file) return;
       $('#file').val('');
-      const $box = $(selectedBox);
-      const width = $box.width();
-      const height = $box.height();
-      const $img = $('<img>').attr('src', file.path).appendTo($box);
-      const pos = $box.position();
-      const key = [pos.left, pos.top].join();
-      $img.cropbox({
-        width,
-        height,
-        zoom: 65e7 / width / height,
-        controls: false,
-        showControls: 'never',
-      }).on('cropbox', (e, crop) => (
-        metrics[key] = { crop, width, height, pos, name: file.path }
-      ));
-      $('<textarea>')
-        .attr('id', `ta${taIdCnt++}`)
-        .appendTo($box)
-        .on('change', function onTAChange() {
-          metrics[key].caption = $(this).val();
-        })
-        .on('keyup', function onTAKeyup() {
-          $(this).height(5);
-          $(this).height(document.getElementById($(this).attr('id')).scrollHeight + 10);
-        });
+      loadFileToBox(file.path);
     });
 
-    loadTemplate(0);
+    if (!autoLoad()) loadTemplate(0);
   });
 
   ipcRenderer.on('remove', () => {
@@ -303,6 +331,7 @@ const { ipcRenderer, clipboard } = require('electron');
 
   ipcRenderer.on('template', (sender, num) => {
     loadTemplate(num - 1);
+    autoSave();
   });
 
   ipcRenderer.on('export', () => {
@@ -312,5 +341,6 @@ const { ipcRenderer, clipboard } = require('electron');
 
   ipcRenderer.on('new', () => {
     loadTemplate(0);
+    autoSave();
   });
 })();
