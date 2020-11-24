@@ -66,6 +66,7 @@ async function handleChangeFont(win) {
     title: 'Select Font Family',
     label: 'Font Family:',
     type: 'input',
+    customStylesheet: 'prompt.css',
   }, win);
   if (fontFamily) win.webContents.send('font', fontFamily);
 }
