@@ -1,5 +1,7 @@
 'use strict';
 
+const { join: pathJoin } = require('path');
+
 const { app, Menu, BrowserWindow, ipcMain, dialog } = require('electron');
 
 const templates = require('./templates');
@@ -19,7 +21,7 @@ function createWindow() {
     resizable: false,
   });
 
-  win.loadFile('index.html');
+  win.loadFile(pathJoin(__dirname, 'index.html'));
 
   return win;
 }
