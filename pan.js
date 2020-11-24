@@ -156,7 +156,7 @@ const { ipcRenderer, clipboard } = require('electron');
 
   function loadFileToBox(path) {
     const $box = $(`#${selectedBox}`);
-    console.log({ selectedBox, $box });
+    console.log($box[0]);
     const width = $box.width();
     const height = $box.height();
     const $img = $('<img>').attr('src', path).appendTo($box);
@@ -167,6 +167,7 @@ const { ipcRenderer, clipboard } = require('electron');
       zoom: 65e7 / width / height,
       controls: false,
       showControls: 'never',
+      result: metrics[key] && metrics[key].crop,
     }).on('cropbox', (ce, crop) => {
       metrics[key] = { crop, width, height, pos: $box.position(), name: path };
       autoSave();
@@ -187,7 +188,10 @@ const { ipcRenderer, clipboard } = require('electron');
     ({ curTemplate } = settings);
     loadTemplate(curTemplate);
     ({ metrics } = settings);
-    Object.values(metrics);
+    for (const [id, { name }] of Object.entries(metrics)) {
+      selectedBox = id;
+      loadFileToBox(name);
+    }
   }
 
   function autoLoad() {
