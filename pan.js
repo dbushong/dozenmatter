@@ -279,7 +279,7 @@ const { ipcRenderer, clipboard } = require('electron');
         controls: false,
         showControls: 'never',
       }).on('cropbox', (e, crop) => (
-        metrics[key] = { crop, width, height, pos, name: file.name }
+        metrics[key] = { crop, width, height, pos, name: file.path }
       ));
       $('<textarea>')
         .attr('id', `ta${taIdCnt++}`)
@@ -311,6 +311,6 @@ const { ipcRenderer, clipboard } = require('electron');
   });
 
   ipcRenderer.on('new', () => {
-    flashNotice(`Clicked "New" at ${new Date()}`);
+    loadTemplate(0);
   });
 })();
