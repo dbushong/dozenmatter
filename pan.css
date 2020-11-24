@@ -3,8 +3,6 @@ body {
   background-color: #000;
   padding: 0;
   margin: 0 15px;
-  width: 1050px;
-  height: 812.5px;
 }
 #notice {
   position: fixed;
@@ -34,14 +32,13 @@ body {
   max-width: none;
 }
 #calendar {
-  width: 4200px;
-  height: 3250px;
+  width: $outWidth;
+  height: $outHeight;
   padding: 0;
   margin-top: 20px;
   position: relative;
   background-color: #000;
-  transform-origin: top left;
-  transform: scale(0.25);
+  zoom: 25.2%;
 }
 #calendar > div {
   margin: 0;

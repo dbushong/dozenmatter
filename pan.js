@@ -38,64 +38,70 @@ const { ipcRenderer, clipboard } = require('electron');
 
   /* eslint-disable key-spacing,no-multi-spaces,indent */
   const templates = [
-    { cuts:
-      [
-        { box: 0, left:  { pct: 0.4818 } },
-        { box: 1, top:   { pct: 0.4891 } },
-        { box: 2, right: { pct: 0.4432 } },
-        { box: 3, top:   { pct: 0.48   } },
-        { box: 4, left:  { pct: 0.48   } },
-      ],
+    {
+      cuts:
+        [
+          { box: 0, left: { pct: 0.4818 } },
+          { box: 1, top: { pct: 0.4891 } },
+          { box: 2, right: { pct: 0.4432 } },
+          { box: 3, top: { pct: 0.48 } },
+          { box: 4, left: { pct: 0.48 } },
+        ],
       name: 'Left, 6 Boxes',
     },
-    { cuts:
-      [
-        { box: 0, left:  { pct: 0.4818 } },
-        { box: 1, top:   { pct: 0.4891 } },
-        { box: 2, right: { pct: 0.4432 } },
-        { box: 3, top:   { pct: 0.48   } },
-        { box: 4, left:  { pct: 0.48   } },
-        { box: 5, top:   { pct: 0.47   } },
-      ],
+    {
+      cuts:
+        [
+          { box: 0, left: { pct: 0.4818 } },
+          { box: 1, top: { pct: 0.4891 } },
+          { box: 2, right: { pct: 0.4432 } },
+          { box: 3, top: { pct: 0.48 } },
+          { box: 4, left: { pct: 0.48 } },
+          { box: 5, top: { pct: 0.47 } },
+        ],
       name: 'Left, 7 Boxes',
     },
-    { cuts:
-      [
-        { box: 0, left:  { pct: 0.4818 } },
-        { box: 1, top:   { pct: 0.4891 } },
-        { box: 2, right: { pct: 0.4432 } },
-        { box: 3, top:   { pct: 0.48   } },
-      ],
+    {
+      cuts:
+        [
+          { box: 0, left: { pct: 0.4818 } },
+          { box: 1, top: { pct: 0.4891 } },
+          { box: 2, right: { pct: 0.4432 } },
+          { box: 3, top: { pct: 0.48 } },
+        ],
       name: 'Left, 5 Boxes',
     },
-    { cuts:
-      [
-        { box: 0, right: { pct: 0.4818 } },
-        { box: 1, top:   { pct: 0.4891 } },
-        { box: 2, left:  { pct: 0.4432 } },
-        { box: 3, top:   { pct: 0.48   } },
-        { box: 4, right: { pct: 0.48   } },
-      ],
+    {
+      cuts:
+        [
+          { box: 0, right: { pct: 0.4818 } },
+          { box: 1, top: { pct: 0.4891 } },
+          { box: 2, left: { pct: 0.4432 } },
+          { box: 3, top: { pct: 0.48 } },
+          { box: 4, right: { pct: 0.48 } },
+        ],
       name: 'Right, 6 Boxes',
     },
-    { cuts:
-      [
-        { box: 0, right: { pct: 0.4818 } },
-        { box: 1, top:   { pct: 0.4891 } },
-        { box: 2, left:  { pct: 0.4432 } },
-        { box: 3, top:   { pct: 0.48   } },
-        { box: 4, right: { pct: 0.48   } },
-        { box: 5, top:   { pct: 0.47   } },
-      ],
+    {
+      cuts:
+        [
+          { box: 0, right: { pct: 0.4818 } },
+          { box: 1, top: { pct: 0.4891 } },
+          { box: 2, left: { pct: 0.4432 } },
+          { box: 3, top: { pct: 0.48 } },
+          { box: 4, right: { pct: 0.48 } },
+          { box: 5, top: { pct: 0.47 } },
+        ],
       name: 'Right, 7 Boxes',
     },
-    { cuts:
-      [
-        { box: 0, right: { pct: 0.4818 } },
-        { box: 1, top:   { pct: 0.4891 } },
-        { box: 2, left:  { pct: 0.4432 } },
-        { box: 3, top:   { pct: 0.48   } },
-      ],
+    {
+      cuts:
+        [
+          { box: 0, right: { pct: 0.4818 } },
+          { box: 1, top: { pct: 0.4891 } },
+          { box: 2, left: { pct: 0.4432 } },
+          { box: 3, top: { pct: 0.48 } },
+        ],
       name: 'Right, 5 Boxes',
     },
     {
@@ -129,6 +135,9 @@ const { ipcRenderer, clipboard } = require('electron');
     metrics = {};
     curTemplate = i;
     const $cal = $('#calendar').empty();
+    templates[i].boxes.forEach((box, j) =>
+      $('<div>').css(box).attr('id', `box${j + 1}`).appendTo($cal)
+    );
 
     $('#calendar > div').click(function onClick(e) {
       e.preventDefault();
@@ -146,7 +155,8 @@ const { ipcRenderer, clipboard } = require('electron');
   }
 
   function loadFileToBox(path) {
-    const $box = $(selectedBox);
+    const $box = $(`#${selectedBox}`);
+    console.log({ selectedBox, $box });
     const width = $box.width();
     const height = $box.height();
     const $img = $('<img>').attr('src', path).appendTo($box);
@@ -158,7 +168,7 @@ const { ipcRenderer, clipboard } = require('electron');
       controls: false,
       showControls: 'never',
     }).on('cropbox', (ce, crop) => {
-      metrics[key] = { crop, width, height, pos: $box.pos(), name: path };
+      metrics[key] = { crop, width, height, pos: $box.position(), name: path };
       autoSave();
     });
     $('<textarea>')
