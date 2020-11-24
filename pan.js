@@ -42,6 +42,7 @@
         { box: 3, top:   { pct: 0.48   } },
         { box: 4, left:  { pct: 0.48   } },
       ],
+      name: 'Left, 6 Boxes',
     },
     { cuts:
       [
@@ -52,6 +53,7 @@
         { box: 4, left:  { pct: 0.48   } },
         { box: 5, top:   { pct: 0.47   } },
       ],
+      name: 'Left, 7 Boxes',
     },
     { cuts:
       [
@@ -60,6 +62,7 @@
         { box: 2, right: { pct: 0.4432 } },
         { box: 3, top:   { pct: 0.48   } },
       ],
+      name: 'Left, 5 Boxes',
     },
     { cuts:
       [
@@ -69,6 +72,7 @@
         { box: 3, top:   { pct: 0.48   } },
         { box: 4, right: { pct: 0.48   } },
       ],
+      name: 'Right, 6 Boxes',
     },
     { cuts:
       [
@@ -79,6 +83,7 @@
         { box: 4, right: { pct: 0.48   } },
         { box: 5, top:   { pct: 0.47   } },
       ],
+      name: 'Right, 7 Boxes',
     },
     { cuts:
       [
@@ -87,6 +92,7 @@
         { box: 2, left:  { pct: 0.4432 } },
         { box: 3, top:   { pct: 0.48   } },
       ],
+      name: 'Right, 5 Boxes',
     },
     {
       cuts: [
@@ -95,6 +101,7 @@
         { box: 2, right: { pct: 0.4432 } },
         { box: 3, top:   { pct: 0.48   } },
       ],
+      name: 'Cover (Left)',
       buffer: 'top',
     },
   ];
@@ -131,13 +138,24 @@
     boxes.push(box1, box2);
   }
 
-  templates.forEach((tmpl, i) => {
-    const y = tmpl.buffer === 'top' ? bufferSize : 0;
+  // convert templates from {
+  //   name: string,
+  //   cuts: { box: number, (top | left | right)?: { pct: number } }[],
+  //   buffer?: 'top'
+  // } to {
+  //   name: string,
+  //   boxes: { top: string, left: string, width: string, height: string }[],
+  // }
+  templates.forEach(({ name, cuts, buffer }, i) => {
+    const y = buffer === 'top' ? bufferSize : 0;
     const boxes = [{ x: 0, y, w: calWidth, h: calHeight }];
-    tmpl.cuts.forEach(cut => cutBox(boxes, cut));
-    templates[i] = boxes.map(({ x, y: top, w, h }) => (
-      { top: `${top}px`, left: `${x}px`, width: `${w}px`, height: `${h}px` }
-    ));
+    cuts.forEach(cut => cutBox(boxes, cut));
+    templates[i] = {
+      name,
+      boxes: boxes.map(({ x, y: top, w, h }) => (
+        { top: `${top}px`, left: `${x}px`, width: `${w}px`, height: `${h}px` }
+      )),
+    };
   });
 
   function escapeShellArg(arg) {
@@ -217,7 +235,7 @@
   function loadTemplate(i) {
     metrics = {};
     const $cal = $('#calendar').empty();
-    templates[i].forEach(box => $('<div>').css(box).appendTo($cal));
+    templates[i].boxes.forEach(box => $('<div>').css(box).appendTo($cal));
 
     $('#calendar > div').click(function onClick(e) {
       e.preventDefault();
@@ -277,8 +295,8 @@
       prompt('Paste this to your shell', result);
       console.log(result); // eslint-disable-line no-console
     });
-    templates.forEach((template, i) => {
-      $('<option>').val(i).text(`Template ${i + 1}`).appendTo('#template');
+    templates.forEach(({ name }, i) => {
+      $('<option>').val(i).text(name).appendTo('#template');
     });
     $('#template').show()
       .change(function onChange() { loadTemplate(this.selectedIndex); })
