@@ -1,22 +1,29 @@
 {
   "name": "dozenmatter",
-  "productName": "DozenMatter",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Mattes a dozen or less images",
   "repository": {
     "url": "https://github.com/dbushong/dozenmatter",
     "type": "git"
+  },
+  "build": {
+    "appId": "com.floatingsheep.dozenmatter",
+    "productName": "DozenMatter",
+    "publish": ["github"]
   },
   "author": "David Bushong <david@bushong.net>",
   "license": "MIT",
   "main": "main.js",
   "scripts": {
     "watch-stylus": "stylus -w index.styl",
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "release": "build"
   },
   "devDependencies": {
     "electron": "^11.0.2",
-    "electron-packager": "^15.1.0",
+    "electron-builder": "^22.9.1",
     "eslint": "^2.13.1",
     "eslint-config-groupon": "^3.2.0",
     "eslint-plugin-import": "^1.16.0",

@@ -21,7 +21,7 @@ run.
 
 ## Usage
 
-Install one of the prebuilt binaries here. (FIXME: add link)
+Install one of the prebuilt binaries under Releases
 
 ## Development
 
