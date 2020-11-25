@@ -1,6 +1,7 @@
 'use strict';
 
-const { join: pathJoin } = require('path');
+const { join: pathJoin, resolve: pathResolve } = require('path');
+const { existsSync } = require('fs');
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { app, Menu, BrowserWindow, ipcMain, dialog } = require('electron');
@@ -50,15 +51,17 @@ async function handleSaveConfigAs(win) {
   }
 }
 
+function sendLoadConfig(win, filePath) {
+  return win.webContents.send('load', filePath);
+}
+
 async function handleLoadConfig(win) {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
     title: 'Load Matte Config',
     filters: configFilters,
     properties: ['openFile'],
   });
-  if (!canceled) {
-    await win.webContents.send('load', filePaths[0]);
-  }
+  if (!canceled) await sendLoadConfig(win, filePaths[0]);
 }
 
 async function handleExport(win) {
@@ -190,9 +193,15 @@ function createMenus(win) {
   );
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   const win = createWindow();
   createMenus(win);
+  const cfgArg = process.argv[2];
+  if (cfgArg && existsSync(cfgArg)) {
+    win.webContents.once('did-finish-load', () => {
+      sendLoadConfig(win, pathResolve(cfgArg));
+    });
+  }
 });
 
 app.on('window-all-closed', () => {
