@@ -1,6 +1,6 @@
 {
   "name": "dozenmatter",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Mattes a dozen or less images",
   "repository": {
     "url": "https://github.com/dbushong/dozenmatter",
@@ -8,6 +8,9 @@
   },
   "build": {
     "appId": "com.floatingsheep.dozenmatter",
+    "linux": {
+      "target": ["AppImage"]
+    },
     "productName": "DozenMatter",
     "publish": [
       "github"
