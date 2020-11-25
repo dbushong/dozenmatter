@@ -67,9 +67,9 @@ const templates = require('./templates');
 
   function saveConfigToFile() {
     autoSaveConfig();
-    const json = localStorage.getItem(AUTO_SAVE);
-    // console.log('saveConfigToFile', json);
-    const settingsJSON = JSON.stringify(JSON.parse(json), null, 2);
+    const settings = JSON.parse(localStorage.getItem(AUTO_SAVE));
+    delete settings.saveFile;
+    const settingsJSON = JSON.stringify(settings, null, 2);
     writeFileSync(saveFile, settingsJSON);
     flashNotice(`Config saved to ${saveFile}`);
   }
@@ -157,7 +157,7 @@ const templates = require('./templates');
   function loadConfigFromFile(filePath) {
     const settings = JSON.parse(readFileSync(filePath, 'utf8'));
     console.log(`Loading settings from ${filePath}`);
-    loadSettings(settings);
+    loadSettings({ ...settings, saveFile: filePath });
   }
 
   function cutBox(boxes, { box, bottom, top, left, right }) {
