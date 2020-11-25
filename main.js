@@ -177,15 +177,15 @@ function createMenus(win) {
       ...(app.isPackaged
         ? []
         : [
-          {
-            label: 'Developer',
-            submenu: [
-              { role: 'reload' },
-              { role: 'forceReload' },
-              { role: 'toggleDevTools' },
-            ],
-          },
-        ]),
+            {
+              label: 'Developer',
+              submenu: [
+                { role: 'reload' },
+                { role: 'forceReload' },
+                { role: 'toggleDevTools' },
+              ],
+            },
+          ]),
     ])
   );
 }
