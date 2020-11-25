@@ -1,25 +1,51 @@
 'use strict';
 
 /* eslint-env browser,jquery */
-
-const { writeFileSync, readFileSync } = require('fs');
-const { promisify } = require('util');
-const exec = promisify(require('child_process').exec);
-
-// eslint-disable-next-line import/no-extraneous-dependencies
-const { ipcRenderer, clipboard } = require('electron');
-
-const templates = require('./templates');
-
-// eslint-disable-next-line no-console
-const log = console.log.bind(console);
-
 (() => {
+  const {
+    resolve: pathResolve,
+    dirname,
+    relative: pathRelative,
+  } = require('path');
+  const { writeFileSync, readFileSync, statSync } = require('fs');
+  const { promisify } = require('util');
+  const exec = promisify(require('child_process').exec);
+
+  // eslint-disable-next-line import/no-extraneous-dependencies
+  const { ipcRenderer, clipboard } = require('electron');
+
+  const templates = require('./templates');
+
+  // eslint-disable-next-line no-console
+  const log = console.log.bind(console);
+
+  // given a relative path (e.g. imgs/x.jpg or ../y.jpg) and an absolute path
+  // to a config file (e.g. /Users/bob/d/c.json), return an absolutized version
+  // of the former, e.g. /Users/bob/d/imgs/x.jpg or /Users/bob/y.jpg respectively
+  function absolutePath(relPath, cfgPath) {
+    return cfgPath ? pathResolve(dirname(cfgPath), relPath) : relPath;
+  }
+
+  // given an absolute path to an image and an absolute path to a config file
+  // (e.g. /Users/bob/d/c.json), return a relativized version of the former
+  // iff it's on the same device as the config path
+  // e.g. /Users/bob/d/imgs/x.jpg, /Users/bob/d/cfg.json -> imgs/x.jpg
+  // but  /Volumes/ext/x.jpg, /Users/bob/d/cfg.json -> /Volumes/ext/x.jpg
+  function relativePath(absPath, cfgPath) {
+    if (!cfgPath) return absPath;
+    const cfgDev = statSync(cfgPath).dev;
+    const imgDev = statSync(absPath).dev;
+    return cfgDev === imgDev
+      ? pathRelative(dirname(cfgPath), absPath)
+      : absPath;
+  }
+
   const lineWidth = 50;
   const bufferSize = 120;
-  const calWidth = 4200;
-  const calFullHeight = 3250;
-  const calHeight = calFullHeight - bufferSize;
+  const matteWidth = 4200;
+  const matteFullHeight = 3250;
+  const matteHeight = matteFullHeight - bufferSize;
+  const settingsVersion = 1;
   let selectedBox = null;
   let metrics = null;
   let curTemplate = null;
@@ -48,6 +74,27 @@ const log = console.log.bind(console);
   +----+--+--+---------+
    */
 
+  function fixupRelativeMetricPaths(oldSaveFile, newSaveFile) {
+    for (const m of Object.values(metrics)) {
+      m.path = relativePath(absolutePath(m.path, oldSaveFile), newSaveFile);
+    }
+  }
+
+  function migrateSettings(settings) {
+    while (settings.version < settingsVersion) {
+      // each case N is the migration to do from N -> N+1
+      switch (settings.version) {
+        case null:
+          settings.version = 0;
+          break;
+        default:
+          // no migration for this version
+          break;
+      }
+      settings.version++;
+    }
+  }
+
   const AUTO_SAVE = 'autoSave';
   function autoSaveConfig() {
     const json = JSON.stringify({
@@ -55,6 +102,7 @@ const log = console.log.bind(console);
       curTemplate,
       saveFile,
       fontFamily,
+      version: settingsVersion,
       savedAt: new Date().toISOString(),
     });
     localStorage.setItem(AUTO_SAVE, json);
@@ -82,12 +130,12 @@ const log = console.log.bind(console);
   function loadTemplate(i) {
     metrics = {};
     curTemplate = i;
-    const $cal = $('#matte').empty();
+    const $matte = $('#matte').empty();
     templates[i].boxes.forEach((box, j) =>
       $('<div>')
         .css(box)
         .attr('id', `box${j + 1}`)
-        .appendTo($cal)
+        .appendTo($matte)
     );
 
     $('#matte > div').click(function onClick(e) {
@@ -114,7 +162,9 @@ const log = console.log.bind(console);
     const $box = $(`#${selectedBox}`);
     const width = $box.width();
     const height = $box.height();
-    const $img = $('<img>').attr('src', path).appendTo($box);
+    const $img = $('<img>')
+      .attr('src', absolutePath(path, saveFile))
+      .appendTo($box);
     const key = $box.attr('id');
     const pos = $box.position();
     $img
@@ -133,7 +183,7 @@ const log = console.log.bind(console);
           width,
           height,
           pos,
-          name: path,
+          path,
         };
         autoSaveConfig();
       });
@@ -152,12 +202,13 @@ const log = console.log.bind(console);
   }
 
   function loadSettings(settings) {
+    migrateSettings(settings);
     ({ curTemplate, fontFamily } = settings);
     loadTemplate(curTemplate);
     ({ metrics, saveFile } = settings);
-    for (const [id, { name }] of Object.entries(metrics)) {
+    for (const [id, { path }] of Object.entries(metrics)) {
       selectedBox = id;
-      loadFileToBox(name);
+      loadFileToBox(path);
     }
     if (saveFile) ipcRenderer.send('enableSave');
   }
@@ -218,7 +269,7 @@ const log = console.log.bind(console);
   // }
   templates.forEach(({ name, cuts, buffer }, i) => {
     const y = buffer === 'top' ? bufferSize : 0;
-    const boxes = [{ x: 0, y, w: calWidth, h: calHeight }];
+    const boxes = [{ x: 0, y, w: matteWidth, h: matteHeight }];
     cuts.forEach(cut => cutBox(boxes, cut));
     templates[i] = {
       name,
@@ -285,7 +336,7 @@ const log = console.log.bind(console);
         `;
         }
         return oneLine`\\(
-         ${escapeShellArg(f.name)}
+         ${escapeShellArg(absolutePath(f.path))}
          -normalize
          -crop ${f.crop.cropW}x${f.crop.cropH}+${f.crop.cropX}+${f.crop.cropY}
          -resize ${f.width}x${f.height} ${caption}
@@ -298,7 +349,7 @@ const log = console.log.bind(console);
       .join(' ');
     return oneLine`
       convert
-        -size ${calWidth}x${calFullHeight}
+        -size ${matteWidth}x${matteFullHeight}
         -font ${fontFamily.replace(/\s+/g, '')}-Bold
         -pointsize 72
         xc:black
@@ -327,7 +378,7 @@ const log = console.log.bind(console);
       const file = e.target.files[0];
       if (!file) return;
       $('#file').val('');
-      loadFileToBox(file.path);
+      loadFileToBox(relativePath(file.path, saveFile));
     });
 
     if (!autoLoadConfig()) loadTemplate(0);
@@ -356,6 +407,8 @@ const log = console.log.bind(console);
   });
 
   ipcRenderer.on('saveAs', (ev, filePath) => {
+    // if we change the save file, we might need to adjust the relative paths
+    fixupRelativeMetricPaths(saveFile, filePath);
     saveFile = filePath;
     saveConfigToFile();
   });
