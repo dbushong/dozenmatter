@@ -14,11 +14,6 @@ const WIDTH = 4200;
 const HEIGHT = 3250;
 const SCALE = 0.252;
 
-function enableSave() {
-  Menu.getApplicationMenu().getMenuItemById('save').enabled = true;
-}
-ipcMain.on('enableSave', enableSave);
-
 function createWindow() {
   const win = new BrowserWindow({
     width: Math.ceil(WIDTH * SCALE),
@@ -51,7 +46,6 @@ async function handleSaveConfigAs(win) {
   });
   if (!canceled) {
     await win.webContents.send('saveAs', filePath);
-    enableSave();
   }
 }
 
@@ -63,7 +57,6 @@ async function handleLoadConfig(win) {
   });
   if (!canceled) {
     await win.webContents.send('load', filePaths[0]);
-    enableSave();
   }
 }
 
@@ -93,6 +86,7 @@ function createMenus(win) {
       ...opts,
     });
   });
+  ipcMain.on('saveAs', () => handleSaveConfigAs(win));
 
   Menu.setApplicationMenu(Menu.buildFromTemplate([
     ...(isMac ? [{
@@ -104,6 +98,7 @@ function createMenus(win) {
       submenu: [
         {
           label: 'New Matte',
+          accelerator: 'CommandOrControl+N',
           id: 'new',
           click: () => win.webContents.send('new'),
         },
@@ -119,7 +114,6 @@ function createMenus(win) {
         {
           label: 'Save Matte Config',
           id: 'save',
-          enabled: false,
           accelerator: 'CommandOrControl+S',
           click: () => win.webContents.send('save'),
         },

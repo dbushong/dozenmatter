@@ -338,7 +338,10 @@ const templates = require('./templates');
     saveConfigToFile();
   });
 
-  ipcRenderer.on('save', saveConfigToFile);
+  ipcRenderer.on('save', () => {
+    if (saveFile) saveConfigToFile();
+    else ipcRenderer.send('saveAs');
+  });
 
   ipcRenderer.on('load', (ev, filePath) => {
     loadConfigFromFile(filePath);
