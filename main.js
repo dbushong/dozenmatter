@@ -33,6 +33,7 @@ function templateMenuItems(win) {
   return templates.map(({ name: label }, i) => ({
     label,
     type: 'radio',
+    id: `tmpl${i}`,
     checked: i === 0,
     click: () => win.webContents.send('template', i),
   }));
@@ -89,17 +90,16 @@ function createMenus(win) {
       ...opts,
     });
   });
+
   ipcMain.on('saveAs', () => handleSaveConfigAs(win));
+
+  ipcMain.on('template', (ev, i) => {
+    Menu.getApplicationMenu().getMenuItemById(`tmpl${i}`).checked = true;
+  });
 
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
-      ...(isMac
-        ? [
-            {
-              role: 'appMenu',
-            },
-          ]
-        : []),
+      ...(isMac ? [{ role: 'appMenu' }] : []),
       {
         id: 'file',
         label: 'File',
@@ -177,15 +177,15 @@ function createMenus(win) {
       ...(app.isPackaged
         ? []
         : [
-            {
-              label: 'Developer',
-              submenu: [
-                { role: 'reload' },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' },
-              ],
-            },
-          ]),
+          {
+            label: 'Developer',
+            submenu: [
+              { role: 'reload' },
+              { role: 'forceReload' },
+              { role: 'toggleDevTools' },
+            ],
+          },
+        ]),
     ])
   );
 }

@@ -9,10 +9,14 @@
   "build": {
     "appId": "com.floatingsheep.dozenmatter",
     "linux": {
-      "target": ["AppImage"]
+      "target": [
+        "AppImage"
+      ]
     },
     "mac": {
-      "target": ["dmg"]
+      "target": [
+        "dmg"
+      ]
     },
     "productName": "DozenMatter",
     "publish": [

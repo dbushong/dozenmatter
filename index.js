@@ -33,11 +33,10 @@
   // but  /Volumes/ext/x.jpg, /Users/bob/d/cfg.json -> /Volumes/ext/x.jpg
   function relativePath(absPath, cfgPath) {
     if (!cfgPath) return absPath;
-    const cfgDev = statSync(cfgPath).dev;
+    const cfgDir = dirname(cfgPath);
+    const cfgDev = statSync(cfgDir).dev;
     const imgDev = statSync(absPath).dev;
-    return cfgDev === imgDev
-      ? pathRelative(dirname(cfgPath), absPath)
-      : absPath;
+    return cfgDev === imgDev ? pathRelative(cfgDir, absPath) : absPath;
   }
 
   const lineWidth = 50;
@@ -210,7 +209,7 @@
       selectedBox = id;
       loadFileToBox(path);
     }
-    if (saveFile) ipcRenderer.send('enableSave');
+    ipcRenderer.send('template', curTemplate);
   }
 
   function autoLoadConfig() {
