@@ -1,17 +1,35 @@
 {
   "name": "dozenmatter",
-  "version": "1.0.0",
-  "description": "makes our calendars",
-  "repository": "dbushong/dozenmatter",
+  "version": "2.0.0",
+  "description": "Mattes a dozen or less images",
+  "repository": {
+    "url": "https://github.com/dbushong/dozenmatter",
+    "type": "git"
+  },
+  "build": {
+    "appId": "com.floatingsheep.dozenmatter",
+    "productName": "DozenMatter",
+    "publish": ["github"]
+  },
   "author": "David Bushong <david@bushong.net>",
-  "license": "ISC",
+  "license": "MIT",
+  "main": "main.js",
   "scripts": {
-    "watch-stylus": "stylus -w pan.styl"
+    "watch-stylus": "stylus -w index.styl",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "release": "build"
   },
   "devDependencies": {
+    "electron": "^11.0.2",
+    "electron-builder": "^22.9.1",
     "eslint": "^2.13.1",
     "eslint-config-groupon": "^3.2.0",
     "eslint-plugin-import": "^1.16.0",
     "stylus": "^0.54.5"
+  },
+  "dependencies": {
+    "electron-prompt": "^1.6.0"
   }
 }
