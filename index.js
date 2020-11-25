@@ -77,12 +77,12 @@ const templates = require('./templates');
   function loadTemplate(i) {
     metrics = {};
     curTemplate = i;
-    const $cal = $('#calendar').empty();
+    const $cal = $('#matte').empty();
     templates[i].boxes.forEach((box, j) =>
       $('<div>').css(box).attr('id', `box${j + 1}`).appendTo($cal)
     );
 
-    $('#calendar > div').click(function onClick(e) {
+    $('#matte > div').click(function onClick(e) {
       e.preventDefault();
       if ($('body').hasClass('deleting')) {
         $(this).find('.cropFrame').remove();

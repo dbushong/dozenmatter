@@ -35,7 +35,7 @@ body {
   cursor: move;
   max-width: none;
 }
-#calendar {
+#matte {
   width: 4200px;
   height: 3250px;
   padding: 0;
@@ -44,21 +44,21 @@ body {
   background-color: #000;
   zoom: 25.2%;
 }
-#calendar > div {
+#matte > div {
   margin: 0;
   padding: 0;
   background-color: #444;
   position: absolute;
   cursor: pointer;
 }
-#calendar > div:hover {
+#matte > div:hover {
   background-color: #666;
 }
-body.deleting #calendar > div:hover {
+body.deleting #matte > div:hover {
   background-color: #444;
   cursor: default;
 }
-body.deleting #calendar > div:hover img {
+body.deleting #matte > div:hover img {
   opacity: 0.3;
   cursor: not-allowed;
 }

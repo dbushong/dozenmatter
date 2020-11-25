@@ -1,50 +1,57 @@
 # dozenmatter
+
 This is a utility to simplify matting a bunch of photos (or other images).
+It is implemented as a standalone Electron app, which you can download and
+run.
 
-Current limitations:
+## Features
 
-* only a few layout templates available
-* doesn't actually save the final result (huge canvases are iffy)
-* no saving
-* always on black
-* needs a recent browser with ES2015+ support (recent Chrome or Firefox should be fine)
+- lets you load, resize, pan, crop a bunch of pictures
+- generates an ImageMagick `convert` commandline to do the actual rendering
+- optionally runs it for you
+- supports saving/loading JSON configuration setups
 
-Features:
+## Current Limitations
 
-* lets you load, resize, pan, crop a bunch of pictures
-* generates (but does not run) an ImageMagick `convert` commandline to do the actual rendering
+- only a few layout templates available
+- always on black
+- if you want it to export as a PNG, you must install ImageMagick `convert`
+  yourself
+- the name is a pun
 
-Usage:
+## Usage
 
-* `$ git clone`
-* navigate to `file:///path/to/dozenmatter/index.html`
-* profit
+Install one of the prebuilt binaries here. (FIXME: add link)
 
-Develop:
+## Development
 
-* `$ npm install`
-* `$ npm run watch-stylus`
+```
+$ git clone https://github.com/dbushong/dozenmatter
+$ cd dozenmatter
+$ npm i
 
-Credits:
+# in one terminal:
+$ npm run watch-stylus
 
-* uses jquery
-* uses https://github.com/acornejo/jquery-cropbox with some tweaks & fixes
+# in another terminal:
+$ cd dozenmatter
+$ npm start
+```
 
+## Credits
+
+- uses jquery
+- uses https://github.com/acornejo/jquery-cropbox with some tweaks & fixes
+
+## TODO
+
+- Build a nice font picker
+- Render without ImageMagick
+- Some sort of progress bar while rendering
+- Get rid of jQuery & use a better cropbox lib
 
 ---
 
-#### Notes for use/future features
+## Notes for use/future features
 
-* Templates are in `pan.js`
-* Gimp Text Settings:
-  * Myriad Pro Bold
-  * 72 pt
-  * White
-  * Centered
-  * Draw a text box before typing
-* Gimp Drop Shadow Settings:
-  * 30px @ 100%
-  * 60px @  90%
-  * 90px @  80%
-* CSS Drop Shadow: https://codepen.io/dbushong/pen/vWVKPx
-* Look into generating OpenRaster file instead of PNG: https://github.com/zsgalusz/ora.js
+- Look into generating OpenRaster file instead of PNG: https://github.com/zsgalusz/ora.js
