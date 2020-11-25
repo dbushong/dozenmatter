@@ -1,6 +1,6 @@
 'use strict';
 
-/* eslint-disable key-spacing,no-multi-spaces,indent */
+/* eslint-disable prettier/prettier */
 module.exports = [
   {
     cuts:

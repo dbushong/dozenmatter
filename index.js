@@ -1,14 +1,18 @@
 'use strict';
 
+/* eslint-env browser,jquery */
+
 const { writeFileSync, readFileSync } = require('fs');
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 const { ipcRenderer, clipboard } = require('electron');
 
 const templates = require('./templates');
 
-/* eslint-disable no-console */
+// eslint-disable-next-line no-console
+const log = console.log.bind(console);
 
 (() => {
   const lineWidth = 50;
@@ -44,7 +48,6 @@ const templates = require('./templates');
   +----+--+--+---------+
    */
 
-
   const AUTO_SAVE = 'autoSave';
   function autoSaveConfig() {
     const json = JSON.stringify({
@@ -54,7 +57,6 @@ const templates = require('./templates');
       fontFamily,
       savedAt: new Date().toISOString(),
     });
-    // console.log('autoSaveConfig', json);
     localStorage.setItem(AUTO_SAVE, json);
   }
 
@@ -62,7 +64,10 @@ const templates = require('./templates');
   function flashNotice(txt) {
     clearTimeout(noticeHideTimer);
     $('#notice').text(txt).toggleClass('shown', true);
-    noticeHideTimer = setTimeout(() => $('#notice').toggleClass('shown', false), 2000);
+    noticeHideTimer = setTimeout(
+      () => $('#notice').toggleClass('shown', false),
+      2000
+    );
   }
 
   function saveConfigToFile() {
@@ -79,7 +84,10 @@ const templates = require('./templates');
     curTemplate = i;
     const $cal = $('#matte').empty();
     templates[i].boxes.forEach((box, j) =>
-      $('<div>').css(box).attr('id', `box${j + 1}`).appendTo($cal)
+      $('<div>')
+        .css(box)
+        .attr('id', `box${j + 1}`)
+        .appendTo($cal)
     );
 
     $('#matte > div').click(function onClick(e) {
@@ -109,17 +117,26 @@ const templates = require('./templates');
     const $img = $('<img>').attr('src', path).appendTo($box);
     const key = $box.attr('id');
     const pos = $box.position();
-    $img.cropbox({
-      width,
-      height,
-      zoom: 65e7 / width / height,
-      controls: false,
-      showControls: 'never',
-      result: metrics[key] && metrics[key].crop,
-    }).on('cropbox', (ce, crop) => {
-      metrics[key] = { ...metrics[key], crop, width, height, pos, name: path };
-      autoSaveConfig();
-    });
+    $img
+      .cropbox({
+        width,
+        height,
+        zoom: 65e7 / width / height,
+        controls: false,
+        showControls: 'never',
+        result: metrics[key] && metrics[key].crop,
+      })
+      .on('cropbox', (ce, crop) => {
+        metrics[key] = {
+          ...metrics[key],
+          crop,
+          width,
+          height,
+          pos,
+          name: path,
+        };
+        autoSaveConfig();
+      });
     const $ta = $('<textarea>')
       .css('fontFamily', fontFamily)
       .appendTo($box)
@@ -149,14 +166,14 @@ const templates = require('./templates');
     const settingsJSON = localStorage.getItem(AUTO_SAVE);
     if (!settingsJSON) return false;
     const settings = JSON.parse(settingsJSON);
-    console.log(`Loading settings saved at ${settings.savedAt}`);
+    log(`Loading settings saved at ${settings.savedAt}`);
     loadSettings(settings);
     return true;
   }
 
   function loadConfigFromFile(filePath) {
     const settings = JSON.parse(readFileSync(filePath, 'utf8'));
-    console.log(`Loading settings from ${filePath}`);
+    log(`Loading settings from ${filePath}`);
     loadSettings({ ...settings, saveFile: filePath });
   }
 
@@ -205,9 +222,12 @@ const templates = require('./templates');
     cuts.forEach(cut => cutBox(boxes, cut));
     templates[i] = {
       name,
-      boxes: boxes.map(({ x, y: top, w, h }) => (
-        { top: `${top}px`, left: `${x}px`, width: `${w}px`, height: `${h}px` }
-      )),
+      boxes: boxes.map(({ x, y: top, w, h }) => ({
+        top: `${top}px`,
+        left: `${x}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+      })),
     };
   });
 
@@ -220,16 +240,18 @@ const templates = require('./templates');
 
   function oneLine(strs, ...vals) {
     vals.push('');
-    return strs.map(s => `${s.replace(/\n[\n\s]*/g, ' ')}${vals.shift()}`)
+    return strs
+      .map(s => `${s.replace(/\n[\n\s]*/g, ' ')}${vals.shift()}`)
       .join('');
   }
 
   function generateConvert(outFile = 'out.png') {
-    const metricsArgs = Object.values(metrics).map(f => {
-      let caption = '';
-      if (f.caption) {
-        const txt = f.caption.trim().replace(/\n/g, '\\n');
-        caption = oneLine`
+    const metricsArgs = Object.values(metrics)
+      .map(f => {
+        let caption = '';
+        if (f.caption) {
+          const txt = f.caption.trim().replace(/\n/g, '\\n');
+          caption = oneLine`
           \\(
             -background none
             -size ${Math.round(f.width * 0.85)}x225
@@ -261,8 +283,8 @@ const templates = require('./templates');
           -geometry +0+0
           -composite
         `;
-      }
-      return oneLine`\\(
+        }
+        return oneLine`\\(
          ${escapeShellArg(f.name)}
          -normalize
          -crop ${f.crop.cropW}x${f.crop.cropH}+${f.crop.cropX}+${f.crop.cropY}
@@ -272,7 +294,8 @@ const templates = require('./templates');
        -geometry +${f.pos.left}+${f.pos.top}
        -composite
       `;
-    }).join(' ');
+      })
+      .join(' ');
     return oneLine`
       convert
         -size ${calWidth}x${calFullHeight}
@@ -292,11 +315,10 @@ const templates = require('./templates');
       await exec(generateConvert(outFile));
       flashNotice(`Rendered PNG to ${outFile}`);
     } catch (err) {
-      ipcRenderer.send('infoBox',
-        {
-          title: 'Rendering Error',
-          message: `Error running convert command: ${err.message}`,
-        });
+      ipcRenderer.send('infoBox', {
+        title: 'Rendering Error',
+        message: `Error running convert command: ${err.message}`,
+      });
     }
   }
 
