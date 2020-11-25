@@ -380,7 +380,9 @@
       $('#file').val('');
       loadFileToBox(relativePath(file.path, saveFile));
     });
+  });
 
+  ipcRenderer.on('startup', () => {
     if (!autoLoadConfig()) loadTemplate(0);
   });
 

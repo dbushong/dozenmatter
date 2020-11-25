@@ -197,11 +197,13 @@ app.whenReady().then(async () => {
   const win = createWindow();
   createMenus(win);
   const cfgArg = process.argv[2];
-  if (cfgArg && existsSync(cfgArg)) {
-    win.webContents.once('did-finish-load', () => {
+  win.webContents.once('did-finish-load', () => {
+    if (cfgArg && existsSync(cfgArg)) {
       sendLoadConfig(win, pathResolve(cfgArg));
-    });
-  }
+    } else {
+      win.webContents.send('startup');
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
