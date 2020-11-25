@@ -11,6 +11,9 @@
     "linux": {
       "target": ["AppImage"]
     },
+    "mac": {
+      "target": ["dmg"]
+    },
     "productName": "DozenMatter",
     "publish": [
       "github"
