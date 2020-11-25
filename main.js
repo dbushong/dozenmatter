@@ -2,13 +2,13 @@
 
 const { join: pathJoin } = require('path');
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 const { app, Menu, BrowserWindow, ipcMain, dialog } = require('electron');
 const prompt = require('electron-prompt');
 
 const templates = require('./templates');
 
 const isMac = process.platform === 'darwin';
-
 
 const WIDTH = 4200;
 const HEIGHT = 3250;
@@ -69,12 +69,15 @@ async function handleRender(win) {
 }
 
 async function handleChangeFont(win) {
-  const fontFamily = await prompt({
-    title: 'Select Font Family',
-    label: 'Font Family:',
-    type: 'input',
-    customStylesheet: 'prompt.css',
-  }, win);
+  const fontFamily = await prompt(
+    {
+      title: 'Select Font Family',
+      label: 'Font Family:',
+      type: 'input',
+      customStylesheet: 'prompt.css',
+    },
+    win
+  );
   if (fontFamily) win.webContents.send('font', fontFamily);
 }
 
@@ -88,97 +91,103 @@ function createMenus(win) {
   });
   ipcMain.on('saveAs', () => handleSaveConfigAs(win));
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate([
-    ...(isMac ? [{
-      role: 'appMenu',
-    }] : []),
-    {
-      id: 'file',
-      label: 'File',
-      submenu: [
-        {
-          label: 'New Matte',
-          accelerator: 'CommandOrControl+N',
-          id: 'new',
-          click: () => win.webContents.send('new'),
-        },
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      ...(isMac
+        ? [
+            {
+              role: 'appMenu',
+            },
+          ]
+        : []),
+      {
+        id: 'file',
+        label: 'File',
+        submenu: [
+          {
+            label: 'New Matte',
+            accelerator: 'CommandOrControl+N',
+            id: 'new',
+            click: () => win.webContents.send('new'),
+          },
 
-        { type: 'separator' },
-
-        {
-          label: 'Open Matte Config...',
-          id: 'load',
-          accelerator: 'CommandOrControl+O',
-          click: () => handleLoadConfig(win),
-        },
-        {
-          label: 'Save Matte Config',
-          id: 'save',
-          accelerator: 'CommandOrControl+S',
-          click: () => win.webContents.send('save'),
-        },
-        {
-          label: 'Save Matte Config As...',
-          id: 'saveAs',
-          click: () => handleSaveConfigAs(win),
-        },
-
-        { type: 'separator' },
-
-        {
-          label: 'Render as PNG...',
-          accelerator: 'CommandOrControl+R',
-          click: () => handleRender(win),
-        },
-
-        ...(isMac ? [] : [
           { type: 'separator' },
 
-          { role: 'quit' },
-        ]),
-      ],
-    },
+          {
+            label: 'Open Matte Config...',
+            id: 'load',
+            accelerator: 'CommandOrControl+O',
+            click: () => handleLoadConfig(win),
+          },
+          {
+            label: 'Save Matte Config',
+            id: 'save',
+            accelerator: 'CommandOrControl+S',
+            click: () => win.webContents.send('save'),
+          },
+          {
+            label: 'Save Matte Config As...',
+            id: 'saveAs',
+            click: () => handleSaveConfigAs(win),
+          },
 
-    {
-      label: 'Edit',
-      submenu: [
-        {
-          label: 'Copy Convert Command',
-          accelerator: 'CommandOrControl+C',
-          click: () => win.webContents.send('export'),
-        },
+          { type: 'separator' },
 
-        { type: 'separator' },
+          {
+            label: 'Render as PNG...',
+            accelerator: 'CommandOrControl+R',
+            click: () => handleRender(win),
+          },
 
-        {
-          label: 'Remove Image',
-          id: 'remove',
-          click: () => win.webContents.send('remove'),
-        },
+          ...(isMac ? [] : [{ type: 'separator' }, { role: 'quit' }]),
+        ],
+      },
 
-        { type: 'separator' },
+      {
+        label: 'Edit',
+        submenu: [
+          {
+            label: 'Copy Convert Command',
+            accelerator: 'CommandOrControl+C',
+            click: () => win.webContents.send('export'),
+          },
 
-        {
-          label: 'Change Caption Font',
-          click: () => handleChangeFont(win),
-        },
-      ],
-    },
+          { type: 'separator' },
 
-    {
-      label: 'Template',
-      submenu: templateMenuItems(win),
-    },
+          {
+            label: 'Remove Image',
+            id: 'remove',
+            click: () => win.webContents.send('remove'),
+          },
 
-    ...(app.isPackaged ? [] : [{
-      label: 'Developer',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forceReload' },
-        { role: 'toggleDevTools' },
-      ],
-    }]),
-  ]));
+          { type: 'separator' },
+
+          {
+            label: 'Change Caption Font',
+            click: () => handleChangeFont(win),
+          },
+        ],
+      },
+
+      {
+        label: 'Template',
+        submenu: templateMenuItems(win),
+      },
+
+      ...(app.isPackaged
+        ? []
+        : [
+            {
+              label: 'Developer',
+              submenu: [
+                { role: 'reload' },
+                { role: 'forceReload' },
+                { role: 'toggleDevTools' },
+              ],
+            },
+          ]),
+    ])
+  );
 }
 
 app.whenReady().then(() => {
