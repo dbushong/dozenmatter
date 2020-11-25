@@ -61,12 +61,12 @@ async function handleLoadConfig(win) {
   }
 }
 
-async function handleRender(win) {
+async function handleExport(win) {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Export as PNG',
     filters: [{ name: 'PNG files', extensions: ['png'] }],
   });
-  if (!canceled) await win.webContents.send('render', filePath);
+  if (!canceled) await win.webContents.send('export', filePath);
 }
 
 async function handleChangeFont(win) {
@@ -134,9 +134,9 @@ function createMenus(win) {
           { type: 'separator' },
 
           {
-            label: 'Render as PNG...',
-            accelerator: 'CommandOrControl+R',
-            click: () => handleRender(win),
+            label: 'Export as PNG...',
+            accelerator: 'CommandOrControl+E',
+            click: () => handleExport(win),
           },
 
           ...(isMac ? [] : [{ type: 'separator' }, { role: 'quit' }]),
@@ -149,7 +149,7 @@ function createMenus(win) {
           {
             label: 'Copy Convert Command',
             accelerator: 'CommandOrControl+C',
-            click: () => win.webContents.send('export'),
+            click: () => win.webContents.send('copy'),
           },
 
           { type: 'separator' },

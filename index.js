@@ -154,7 +154,7 @@
 
   function resetCaptionHeight(e) {
     $(e).height(5);
-    $(e).height(e.scrollHeight + 10);
+    $(e).height(e.scrollHeight + 20);
   }
 
   function loadFileToBox(path) {
@@ -335,7 +335,7 @@
         `;
         }
         return oneLine`\\(
-         ${escapeShellArg(absolutePath(f.path))}
+         ${escapeShellArg(absolutePath(f.path, saveFile))}
          -normalize
          -crop ${f.crop.cropW}x${f.crop.cropH}+${f.crop.cropX}+${f.crop.cropY}
          -resize ${f.width}x${f.height} ${caption}
@@ -361,12 +361,12 @@
     // TODO: change command generator to return array, and escape on-the-fly
     // instead of using exec() here
     try {
-      flashNotice(`Rendering PNG to ${outFile}, please wait...`);
+      flashNotice(`Exporting PNG to ${outFile}, please wait...`);
       await exec(generateConvert(outFile));
-      flashNotice(`Rendered PNG to ${outFile}`);
+      flashNotice(`Exported PNG to ${outFile}`);
     } catch (err) {
       ipcRenderer.send('infoBox', {
-        title: 'Rendering Error',
+        title: 'Exporting Error',
         message: `Error running convert command: ${err.message}`,
       });
     }
@@ -394,7 +394,7 @@
     autoSaveConfig();
   });
 
-  ipcRenderer.on('export', () => {
+  ipcRenderer.on('copy', () => {
     clipboard.writeText(generateConvert(), 'selection');
     flashNotice('Copied convert command to clipboard');
   });
@@ -427,7 +427,7 @@
     $('textarea').css('fontFamily', fontFamily);
   });
 
-  ipcRenderer.on('render', async (ev, filePath) => {
+  ipcRenderer.on('export', async (ev, filePath) => {
     await runConvert(filePath);
   });
 })();
