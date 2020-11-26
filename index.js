@@ -362,8 +362,9 @@
     // instead of using exec() here
     try {
       flashNotice(`Exporting PNG to ${outFile}, please wait...`);
-      await exec(generateConvert(outFile));
-      flashNotice(`Exported PNG to ${outFile}`);
+      const res = await exec(generateConvert(outFile));
+      const withWarnings = res.stderr ? ` with warnings: ${res.stderr}` : '';
+      flashNotice(`Exported PNG to ${outFile}${withWarnings}`);
     } catch (err) {
       ipcRenderer.send('infoBox', {
         title: 'Exporting Error',
