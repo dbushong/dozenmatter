@@ -40,6 +40,17 @@ $ cd dozenmatter
 $ npm start
 ```
 
+### Releasing
+
+Open a PR, get the PR merged to master, pull master locally, then:
+
+```
+$ git tag vX.Y.Z && git push origin tag vX.Y.Z
+```
+
+Then go to https://github.com/dbushong/dozenmatter/releases , click on the
+Draft release, name it `vX.Y.Z`, and Publish it
+
 ## Credits
 
 - uses jquery
