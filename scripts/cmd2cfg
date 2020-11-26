@@ -53,56 +53,48 @@ if (boxes.some(b => b.pos.top === 2780 && b.pos.left === 992)) {
   cfg.curTemplate = 6; // left cover
 }
 
-const FIXME = NaN;
-
 const isRight = [3, 4, 5].includes(cfg.curTemplate);
 for (const box of boxes) {
   let i;
   switch (`${box.pos.top} ${box.pos.left}`) {
+    case '0 0':
+    case '120 0':
+      i = isRight ? 1 : 0;
+      break;
     case '0 2176':
       i = isRight ? 0 : 1;
       break;
     case '0 2074':
-      i = isRight ? FIXME : 1;
-      break;
-    case '1581 3258':
-      i = isRight ? FIXME : 2;
-      break;
-    case '1581 2074':
-      i = isRight ? FIXME : 3;
-      break;
-    case '2375 2074':
-      i = isRight ? FIXME : 4;
-      break;
-    case '2375 2668':
-      i = isRight ? FIXME : 5;
-      break;
-    case '2780 2668':
-      i = isRight ? FIXME : 6;
-      break;
-    case '0 0':
-      i = isRight ? 1 : 0;
+    case '120 2074':
+      i = 1;
       break;
     case '1581 0':
-      i = isRight ? 2 : FIXME;
+    case '1581 3258':
+    case '1701 3258':
+      i = 2;
       break;
+    case '1581 2074':
+    case '1701 2074':
     case '1581 992':
-      i = isRight ? 3 : FIXME;
+      i = 3;
       break;
+    case '2375 2074':
     case '2375 1582':
-      i = isRight ? 4 : FIXME;
+    case '2495 2074':
+      i = 4;
       break;
     case '2375 992':
-      i = isRight ? 5 : FIXME;
+    case '2375 2668':
+      i = 5;
       break;
+    case '2780 2668':
     case '2780 992':
-      i = isRight ? 6 : FIXME;
+      i = 6;
       break;
     default:
       console.error('Unknown box: ', box);
       process.exit(1);
   }
-  if (i === FIXME) throw new Error('FIXME');
   cfg.metrics[`box${i + 1}`] = box;
 }
 
