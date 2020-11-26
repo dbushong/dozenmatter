@@ -1,6 +1,6 @@
 {
   "name": "dozenmatter",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Mattes a dozen or less images",
   "repository": {
     "url": "https://github.com/dbushong/dozenmatter",
@@ -49,7 +49,5 @@
     "prettier": "^2.0.5",
     "stylus": "^0.54.5"
   },
-  "dependencies": {
-    "electron-prompt": "^1.6.0"
-  }
+  "dependencies": {}
 }

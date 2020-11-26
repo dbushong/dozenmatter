@@ -5,15 +5,21 @@ const { existsSync } = require('fs');
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { app, Menu, BrowserWindow, ipcMain, dialog } = require('electron');
-const prompt = require('electron-prompt');
 
 const templates = require('./templates');
+const { listBoldFonts } = require('./fonts');
 
 const isMac = process.platform === 'darwin';
 
 const WIDTH = 4200;
 const HEIGHT = 3250;
 const SCALE = 0.252;
+
+function dieOnError(err) {
+  process.nextTick(() => {
+    throw err;
+  });
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -37,6 +43,16 @@ function templateMenuItems(win) {
     id: `tmpl${i}`,
     checked: i === 0,
     click: () => win.webContents.send('template', i),
+  }));
+}
+
+function fontMenuItems(win, fontList) {
+  return fontList.map(({ cssFontFamily, imFontName }, i) => ({
+    label: cssFontFamily,
+    type: 'radio',
+    id: `font-${imFontName}`,
+    checked: i === 0,
+    click: () => win.webContents.send('font', { cssFontFamily, imFontName }),
   }));
 }
 
@@ -72,20 +88,7 @@ async function handleExport(win) {
   if (!canceled) await win.webContents.send('export', filePath);
 }
 
-async function handleChangeFont(win) {
-  const fontFamily = await prompt(
-    {
-      title: 'Select Font Family',
-      label: 'Font Family:',
-      type: 'input',
-      customStylesheet: 'prompt.css',
-    },
-    win
-  );
-  if (fontFamily) win.webContents.send('font', fontFamily);
-}
-
-function createMenus(win) {
+async function createMenus(win) {
   ipcMain.on('infoBox', (ev, opts) => {
     dialog.showMessageBox(win, {
       type: 'info',
@@ -98,6 +101,21 @@ function createMenus(win) {
 
   ipcMain.on('template', (ev, i) => {
     Menu.getApplicationMenu().getMenuItemById(`tmpl${i}`).checked = true;
+  });
+
+  const fontList = await listBoldFonts();
+  const fallbackFont = fontList[0];
+  ipcMain.on('font', async (ev, id) => {
+    const menu = Menu.getApplicationMenu().getMenuItemById(`font-${id}`);
+    if (menu) menu.checked = true;
+    else {
+      await dialog.showMessageBox(win, {
+        type: 'warning',
+        buttons: ['OK'],
+        message: `Unable to find font "${id}" locally; falling back on ${fallbackFont.cssFontFamily}`,
+      });
+      win.webContents.send('font', fallbackFont);
+    }
   });
 
   Menu.setApplicationMenu(
@@ -162,13 +180,6 @@ function createMenus(win) {
             id: 'remove',
             click: () => win.webContents.send('remove'),
           },
-
-          { type: 'separator' },
-
-          {
-            label: 'Change Caption Font',
-            click: () => handleChangeFont(win),
-          },
         ],
       },
 
@@ -176,6 +187,8 @@ function createMenus(win) {
         label: 'Template',
         submenu: templateMenuItems(win),
       },
+
+      { label: 'Font', submenu: fontMenuItems(win, fontList) },
 
       ...(app.isPackaged
         ? []
@@ -193,18 +206,19 @@ function createMenus(win) {
   );
 }
 
-app.whenReady().then(async () => {
-  const win = createWindow();
-  createMenus(win);
-  const cfgArg = process.argv[2];
-  win.webContents.once('did-finish-load', () => {
-    if (cfgArg && existsSync(cfgArg)) {
-      sendLoadConfig(win, pathResolve(cfgArg));
-    } else {
-      win.webContents.send('startup');
-    }
-  });
-});
+app
+  .whenReady()
+  .then(async () => {
+    const win = createWindow();
+    await createMenus(win);
+    const cfgArg = process.argv[2];
+    win.webContents.once('did-finish-load', () => {
+      if (cfgArg && existsSync(cfgArg)) {
+        sendLoadConfig(win, pathResolve(cfgArg));
+      }
+    });
+  })
+  .catch(dieOnError);
 
 app.on('window-all-closed', () => {
   app.quit();

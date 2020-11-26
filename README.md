@@ -19,9 +19,11 @@ run.
   yourself
 - the name is a pun
 
-## Usage
+## Installation
 
-Install one of the prebuilt binaries under Releases
+1. Install ImageMagick
+1. Install one of the prebuilt DozenMatter binaries under Releases, or follow
+  the instructions under "Development"
 
 ## Development
 

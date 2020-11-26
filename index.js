@@ -44,12 +44,13 @@
   const matteWidth = 4200;
   const matteFullHeight = 3250;
   const matteHeight = matteFullHeight - bufferSize;
-  const settingsVersion = 1;
+  const settingsVersion = 2;
   let selectedBox = null;
   let metrics = null;
   let curTemplate = null;
   let saveFile = null;
-  let fontFamily = 'Arial';
+  let cssFontFamily = 'Arial';
+  let imFontName = 'Arial-Bold';
 
   /* Template 1,2,3,7
   +---------+----------+
@@ -86,6 +87,14 @@
         case null:
           settings.version = 0;
           break;
+        case 1:
+          settings.cssFontFamily = settings.fontFamily;
+          delete settings.fontFamily;
+          settings.imFontName = `${settings.cssFontFamily.replace(
+            / /g,
+            ''
+          )}-Bold`;
+          break;
         default:
           // no migration for this version
           break;
@@ -100,7 +109,8 @@
       metrics,
       curTemplate,
       saveFile,
-      fontFamily,
+      cssFontFamily,
+      imFontName,
       version: settingsVersion,
       savedAt: new Date().toISOString(),
     });
@@ -187,7 +197,7 @@
         autoSaveConfig();
       });
     const $ta = $('<textarea>')
-      .css('fontFamily', fontFamily)
+      .css('fontFamily', cssFontFamily)
       .appendTo($box)
       .on('keyup', function onTAKeyup() {
         resetCaptionHeight(this);
@@ -202,7 +212,7 @@
 
   function loadSettings(settings) {
     migrateSettings(settings);
-    ({ curTemplate, fontFamily } = settings);
+    ({ curTemplate, imFontName, cssFontFamily } = settings);
     loadTemplate(curTemplate);
     ({ metrics, saveFile } = settings);
     for (const [id, { path }] of Object.entries(metrics)) {
@@ -210,6 +220,7 @@
       loadFileToBox(path);
     }
     ipcRenderer.send('template', curTemplate);
+    ipcRenderer.send('font', imFontName);
   }
 
   function autoLoadConfig() {
@@ -349,7 +360,7 @@
     return oneLine`
       convert
         -size ${matteWidth}x${matteFullHeight}
-        -font ${fontFamily.replace(/\s+/g, '')}-Bold
+        -font ${imFontName}
         -pointsize 72
         xc:black
         ${metricsArgs}
@@ -380,9 +391,8 @@
       $('#file').val('');
       loadFileToBox(relativePath(file.path, saveFile));
     });
-  });
 
-  ipcRenderer.on('startup', () => {
+    // startup
     if (!autoLoadConfig()) loadTemplate(0);
   });
 
@@ -424,10 +434,10 @@
     loadConfigFromFile(filePath);
   });
 
-  ipcRenderer.on('font', (ev, ff) => {
-    fontFamily = ff;
+  ipcRenderer.on('font', (ev, font) => {
+    ({ imFontName, cssFontFamily } = font);
     autoSaveConfig();
-    $('textarea').css('fontFamily', fontFamily);
+    $('textarea').css('fontFamily', cssFontFamily);
   });
 
   ipcRenderer.on('export', async (ev, filePath) => {
