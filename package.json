@@ -35,9 +35,10 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "release": "build",
-    "test": "eslint ."
+    "test": "eslint . && tsc"
   },
   "devDependencies": {
+    "@types/jquery": "^3.5.4",
     "@types/node": "^10.17.47",
     "electron": "^11.0.2",
     "electron-builder": "^22.9.1",

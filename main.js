@@ -4,7 +4,7 @@ const { join: pathJoin, resolve: pathResolve } = require('path');
 const { existsSync } = require('fs');
 
 // eslint-disable-next-line import/no-extraneous-dependencies
-const { app, Menu, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 
 const templates = require('./templates');
 const { listBoldFonts } = require('./fonts');
@@ -15,6 +15,11 @@ const WIDTH = 4200;
 const HEIGHT = 3250;
 const SCALE = 0.252;
 
+/**
+ * @typedef {import('electron/main').MenuItemConstructorOptions} MenuItemConstructorOptions
+ */
+
+/** @param {Error} err */
 function dieOnError(err) {
   process.nextTick(() => {
     throw err;
@@ -36,6 +41,10 @@ function createWindow() {
   return win;
 }
 
+/**
+ * @param {BrowserWindow} win
+ * @return {MenuItemConstructorOptions[]}
+ */
 function templateMenuItems(win) {
   return templates.map(({ name: label }, i) => ({
     label,
@@ -46,6 +55,11 @@ function templateMenuItems(win) {
   }));
 }
 
+/**
+ * @param {BrowserWindow} win
+ * @param {import('./fonts').Font[]} fontList
+ * @return {MenuItemConstructorOptions[]}
+ */
 function fontMenuItems(win, fontList) {
   return fontList.map(({ cssFontFamily, imFontName }, i) => ({
     label: cssFontFamily,
@@ -57,6 +71,8 @@ function fontMenuItems(win, fontList) {
 }
 
 const configFilters = [{ name: 'JSON Configs', extensions: ['json'] }];
+
+/** @param {BrowserWindow} win */
 async function handleSaveConfigAs(win) {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Save Matte Config',
@@ -67,10 +83,15 @@ async function handleSaveConfigAs(win) {
   }
 }
 
+/**
+ * @param {BrowserWindow} win
+ * @param {string} filePath
+ */
 function sendLoadConfig(win, filePath) {
   return win.webContents.send('load', filePath);
 }
 
+/** @param {BrowserWindow} win */
 async function handleLoadConfig(win) {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
     title: 'Load Matte Config',
@@ -80,6 +101,7 @@ async function handleLoadConfig(win) {
   if (!canceled) await sendLoadConfig(win, filePaths[0]);
 }
 
+/** @param {BrowserWindow} win */
 async function handleExport(win) {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Export as PNG',
@@ -88,6 +110,22 @@ async function handleExport(win) {
   if (!canceled) await win.webContents.send('export', filePath);
 }
 
+/** @param {string} id */
+function getMenuItem(id) {
+  const appMenu = Menu.getApplicationMenu();
+  if (!appMenu) throw new Error('No app menu!?');
+  return appMenu.getMenuItemById(id);
+}
+
+/**
+ * @param {boolean} condition
+ * @param {MenuItemConstructorOptions[]} items
+ */
+function menuItemsIf(condition, items) {
+  return condition ? items : [];
+}
+
+/** @param {BrowserWindow} win */
 async function createMenus(win) {
   ipcMain.on('infoBox', (ev, opts) => {
     dialog.showMessageBox(win, {
@@ -100,13 +138,14 @@ async function createMenus(win) {
   ipcMain.on('saveAs', () => handleSaveConfigAs(win));
 
   ipcMain.on('template', (ev, i) => {
-    Menu.getApplicationMenu().getMenuItemById(`tmpl${i}`).checked = true;
+    const menuItem = getMenuItem(`tmpl${i}`);
+    if (menuItem) menuItem.checked = true;
   });
 
   const fontList = await listBoldFonts();
   const fallbackFont = fontList[0];
   ipcMain.on('font', async (ev, id) => {
-    const menu = Menu.getApplicationMenu().getMenuItemById(`font-${id}`);
+    const menu = getMenuItem(`font-${id}`);
     if (menu) menu.checked = true;
     else {
       await dialog.showMessageBox(win, {
@@ -120,7 +159,8 @@ async function createMenus(win) {
 
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
-      ...(isMac ? [{ role: 'appMenu' }] : []),
+      ...menuItemsIf(isMac, [{ role: 'appMenu' }]),
+
       {
         id: 'file',
         label: 'File',
@@ -160,7 +200,7 @@ async function createMenus(win) {
             click: () => handleExport(win),
           },
 
-          ...(isMac ? [] : [{ type: 'separator' }, { role: 'quit' }]),
+          ...menuItemsIf(!isMac, [{ type: 'separator' }, { role: 'quit' }]),
         ],
       },
 
@@ -183,25 +223,20 @@ async function createMenus(win) {
         ],
       },
 
-      {
-        label: 'Template',
-        submenu: templateMenuItems(win),
-      },
+      { label: 'Template', submenu: templateMenuItems(win) },
 
       { label: 'Font', submenu: fontMenuItems(win, fontList) },
 
-      ...(app.isPackaged
-        ? []
-        : [
-            {
-              label: 'Developer',
-              submenu: [
-                { role: 'reload' },
-                { role: 'forceReload' },
-                { role: 'toggleDevTools' },
-              ],
-            },
-          ]),
+      ...menuItemsIf(!app.isPackaged, [
+        {
+          label: 'Developer',
+          submenu: [
+            { role: 'reload' },
+            { role: 'forceReload' },
+            { role: 'toggleDevTools' },
+          ],
+        },
+      ]),
     ])
   );
 }

@@ -9,7 +9,8 @@
     "strict": true,
     "moduleResolution": "node",
     "types": [
-      "node"
+      "node",
+      "jquery"
     ],
     "esModuleInterop": true
   },

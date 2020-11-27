@@ -4,6 +4,12 @@ const { basename } = require('path');
 const { promisify } = require('util');
 const execFile = promisify(require('child_process').execFile);
 
+/**
+ * @typedef {{ name: string, family: string, glyphs: string }} ParsedIMFont
+ * @typedef {{ cssFontFamily: string, imFontName: string }} Font
+ */
+
+/** @param {string} output */
 function parseConvertListFont(output) {
   const re = /^ {2}Font: (?<name>.+)\n(?<attrs>(?: {4}.+\n)+)/gm;
   let fMatch;
@@ -11,33 +17,47 @@ function parseConvertListFont(output) {
   while ((fMatch = re.exec(output))) {
     const attrRE = / {4}(?<attr>\w+): (?<val>.+)\n/g;
     let aMatch;
+    /** @type {Record<string, string>} */
     const attrs = {};
+    if (!fMatch.groups) continue;
     while ((aMatch = attrRE.exec(fMatch.groups.attrs))) {
+      if (!aMatch.groups) continue;
       attrs[aMatch.groups.attr] = aMatch.groups.val;
     }
-    fonts.push({ name: fMatch.groups.name, ...attrs });
+    if (attrs.family && attrs.glyphs) {
+      fonts.push({
+        name: fMatch.groups.name,
+        family: attrs.family,
+        glyphs: attrs.glyphs,
+      });
+    }
   }
   return fonts;
 }
 
+/** @param {ParsedIMFont[]} fontList */
 function boldOnly(fontList) {
   return fontList.filter(
-    ({ name, glyphs }) => /Bold$/.test(name) || /Bold\.[a-zA-Z]+$/.test(glyphs)
+    ({ name, glyphs }) =>
+      /Bold$/.test(name) || /Bold\.[a-zA-Z]+$/.test(glyphs || '')
   );
 }
 
+/** @param {ParsedIMFont[]} fontList */
 function noCJK(fontList) {
-  return fontList.filter(({ family }) => !family.includes('CJK'));
+  return fontList.filter(({ family }) => !(family || '').includes('CJK'));
 }
 
+/** @param {ParsedIMFont} font */
 function inferFamily({ family, glyphs }) {
   return family === 'unknown'
-    ? basename(glyphs)
+    ? basename(glyphs || '')
         .replace(/(?:[- ]?Bold)?\.[a-z]+$/, '')
         .replace(/([a-z])([A-Z])/g, '$1 $2')
     : family;
 }
 
+/** @param {ParsedIMFont[]} fontList */
 function normalizeProps(fontList) {
   return fontList.map(f => ({
     imFontName: f.name,
@@ -45,6 +65,7 @@ function normalizeProps(fontList) {
   }));
 }
 
+/** @param {Font[]} fontList */
 function sortByFamily(fontList) {
   return fontList.sort((a, b) => {
     const al = a.cssFontFamily.toLowerCase();
