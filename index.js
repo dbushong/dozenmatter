@@ -1,6 +1,7 @@
 'use strict';
 
 /* eslint-env browser,jquery */
+
 (() => {
   const {
     resolve: pathResolve,
@@ -14,14 +15,46 @@
   // eslint-disable-next-line import/no-extraneous-dependencies
   const { ipcRenderer, clipboard } = require('electron');
 
-  const templates = require('./templates');
+  const templateCuts = require('./templates');
 
   // eslint-disable-next-line no-console
   const log = console.log.bind(console);
 
+  /**
+   * @typedef MetricsBox
+   * @property {{ cropX: number, cropY: number, cropW: number, cropH: number }} crop
+   * @property {number} width
+   * @property {number} height
+   * @property {{ top: number, left: number }} pos
+   * @property {string} path
+   * @property {string} [caption]
+   *
+   * @typedef Metrics
+   * @property {MetricsBox} [box1]
+   * @property {MetricsBox} [box2]
+   * @property {MetricsBox} [box3]
+   * @property {MetricsBox} [box4]
+   * @property {MetricsBox} [box5]
+   * @property {MetricsBox} [box6]
+   * @property {MetricsBox} [box7]
+   *
+   * @typedef Settings
+   * @property {string} cssFontFamily
+   * @property {string} imFontName
+   * @property {number} version
+   * @property {number} curTemplate
+   * @property {string} savedAt
+   * @property {string} saveFile
+   * @property {Metrics} metrics
+   */
+
   // given a relative path (e.g. imgs/x.jpg or ../y.jpg) and an absolute path
   // to a config file (e.g. /Users/bob/d/c.json), return an absolutized version
   // of the former, e.g. /Users/bob/d/imgs/x.jpg or /Users/bob/y.jpg respectively
+  /**
+   * @param {string} relPath
+   * @param {string | null} cfgPath
+   */
   function absolutePath(relPath, cfgPath) {
     return cfgPath ? pathResolve(dirname(cfgPath), relPath) : relPath;
   }
@@ -31,6 +64,10 @@
   // iff it's on the same device as the config path
   // e.g. /Users/bob/d/imgs/x.jpg, /Users/bob/d/cfg.json -> imgs/x.jpg
   // but  /Volumes/ext/x.jpg, /Users/bob/d/cfg.json -> /Volumes/ext/x.jpg
+  /**
+   * @param {string} absPath
+   * @param {string | null} cfgPath
+   */
   function relativePath(absPath, cfgPath) {
     if (!cfgPath) return absPath;
     const cfgDir = dirname(cfgPath);
@@ -45,9 +82,13 @@
   const matteFullHeight = 3250;
   const matteHeight = matteFullHeight - bufferSize;
   const settingsVersion = 2;
-  let selectedBox = null;
-  let metrics = null;
-  let curTemplate = null;
+  /** @type {string} */
+  let selectedBox;
+  /** @type {Metrics} */
+  let metrics;
+  /** @type {number} */
+  let curTemplate;
+  /** @type {string | null} */
   let saveFile = null;
   let cssFontFamily = 'Arial';
   let imFontName = 'Arial-Bold';
@@ -74,12 +115,46 @@
   +----+--+--+---------+
    */
 
+  /**
+   * convert templates from {
+   *   name: string,
+   *   cuts: { box: number, (top | left | right)?: { pct: number } }[],
+   *   buffer?: 'top'
+   * } to {
+   *   name: string,
+   *   boxes: { top: string, left: string, width: string, height: string }[],
+   * }
+   *
+   * @typedef {{ x: number, y: number, w: number, h: number }} Box
+   */
+  const templates = templateCuts.map(({ name, cuts, buffer }) => {
+    const y = buffer === 'top' ? bufferSize : 0;
+    /** @type {Box[]} */
+    const boxes = [{ x: 0, y, w: matteWidth, h: matteHeight }];
+    cuts.forEach(cut => cutBox(boxes, cut));
+    return {
+      name,
+      boxes: boxes.map(({ x, y: top, w, h }) => ({
+        top: `${top}px`,
+        left: `${x}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+      })),
+    };
+  });
+
+  /**
+   * @param {string | null} oldSaveFile
+   * @param {string} newSaveFile
+   */
   function fixupRelativeMetricPaths(oldSaveFile, newSaveFile) {
     for (const m of Object.values(metrics)) {
+      if (!m) continue; // make TS happy
       m.path = relativePath(absolutePath(m.path, oldSaveFile), newSaveFile);
     }
   }
 
+  /** @param {Settings} settings */
   function migrateSettings(settings) {
     while (settings.version < settingsVersion) {
       // each case N is the migration to do from N -> N+1
@@ -88,7 +163,9 @@
           settings.version = 0;
           break;
         case 1:
+          /** @ts-ignore */
           settings.cssFontFamily = settings.fontFamily;
+          /** @ts-ignore */
           delete settings.fontFamily;
           settings.imFontName = `${settings.cssFontFamily.replace(
             / /g,
@@ -117,7 +194,9 @@
     localStorage.setItem(AUTO_SAVE, json);
   }
 
+  /** @type {NodeJS.Timeout} */
   let noticeHideTimer;
+  /** @param {string} txt */
   function flashNotice(txt) {
     clearTimeout(noticeHideTimer);
     $('#notice').text(txt).toggleClass('shown', true);
@@ -128,14 +207,18 @@
   }
 
   function saveConfigToFile() {
+    if (!saveFile) return;
     autoSaveConfig();
-    const settings = JSON.parse(localStorage.getItem(AUTO_SAVE));
+    const settings = JSON.parse(localStorage.getItem(AUTO_SAVE) || '');
     delete settings.saveFile;
     const settingsJSON = JSON.stringify(settings, null, 2);
     writeFileSync(saveFile, settingsJSON);
     flashNotice(`Config saved to ${saveFile}`);
   }
 
+  /**
+   * @param {number} i
+   */
   function loadTemplate(i) {
     metrics = {};
     curTemplate = i;
@@ -149,32 +232,40 @@
 
     $('#matte > div').click(function onClick(e) {
       e.preventDefault();
+      const id = /** @type {keyof Metrics} */ ($(this).attr('id'));
       if ($('body').hasClass('deleting')) {
         $(this).find('.cropFrame').remove();
         $(this).find('textarea').remove();
-        delete metrics[$(this).attr('id')];
+        delete metrics[id];
         autoSaveConfig();
         $('body').removeClass('deleting');
       } else if ($(this).find('img').length === 0) {
-        selectedBox = $(this).attr('id');
+        selectedBox = id;
         $('#file')[0].click();
       }
     });
   }
 
+  /** @param {HTMLElement} e */
   function resetCaptionHeight(e) {
     $(e).height(5);
     $(e).height(e.scrollHeight + 20);
   }
 
+  /** @param {string} path */
   function loadFileToBox(path) {
     const $box = $(`#${selectedBox}`);
     const width = $box.width();
     const height = $box.height();
-    const $img = $('<img>')
-      .attr('src', absolutePath(path, saveFile))
-      .appendTo($box);
-    const key = $box.attr('id');
+    if (!width || !height) {
+      throw new Error(`invalid width or height: ${width}x${height}`);
+    }
+    const $img =
+      /** @type {JQuery<HTMLElement> & { cropbox(opts: any): JQuery<HTMLElement>}} */
+      ($('<img>').attr('src', absolutePath(path, saveFile)).appendTo($box));
+    const key = /** @type {keyof Metrics} */ ($box.attr('id'));
+    const box = metrics[key];
+    if (!box) throw new Error(`invalid id: ${key}`);
     const pos = $box.position();
     $img
       .cropbox({
@@ -183,11 +274,11 @@
         zoom: 65e7 / width / height,
         controls: false,
         showControls: 'never',
-        result: metrics[key] && metrics[key].crop,
+        result: box.crop,
       })
       .on('cropbox', (ce, crop) => {
         metrics[key] = {
-          ...metrics[key],
+          ...box,
           crop,
           width,
           height,
@@ -201,23 +292,23 @@
       .appendTo($box)
       .on('keyup', function onTAKeyup() {
         resetCaptionHeight(this);
-        metrics[key].caption = $(this).val();
+        box.caption = /** @type {string} */ ($(this).val());
         autoSaveConfig();
       });
-    if (metrics[key]) {
-      $ta.val(metrics[key].caption);
-      resetCaptionHeight($ta[0]);
-    }
+    $ta.val(box.caption || '');
+    resetCaptionHeight($ta[0]);
   }
 
+  /** @param {Settings} settings */
   function loadSettings(settings) {
     migrateSettings(settings);
     ({ curTemplate, imFontName, cssFontFamily } = settings);
     loadTemplate(curTemplate);
     ({ metrics, saveFile } = settings);
-    for (const [id, { path }] of Object.entries(metrics)) {
+    for (const [id, box] of Object.entries(metrics)) {
+      if (!box) continue;
       selectedBox = id;
-      loadFileToBox(path);
+      loadFileToBox(box.path);
     }
     ipcRenderer.send('template', curTemplate);
     ipcRenderer.send('font', imFontName);
@@ -232,21 +323,29 @@
     return true;
   }
 
+  /** @param {string} filePath */
   function loadConfigFromFile(filePath) {
     const settings = JSON.parse(readFileSync(filePath, 'utf8'));
     log(`Loading settings from ${filePath}`);
     loadSettings({ ...settings, saveFile: filePath });
   }
 
-  function cutBox(boxes, { box, bottom, top, left, right }) {
+  /**
+   * @typedef {{ aspect: number } | { pct: number }} Ratio
+   *
+   * @param {Box[]} boxes
+   * @param {{ box: number } & ({ right: Ratio } | { top: Ratio } | { left: Ratio } | { bottom: Ratio })} cut
+   */
+  function cutBox(boxes, cut) {
+    const { box } = cut;
     const { x, y, w, h } = boxes[box];
-    let pri = left || right;
     let box1;
     let box2;
     /* eslint-disable no-multi-spaces */
-    if (pri) {
-      const priW = Math.round(pri.pct ? w * pri.pct : h * pri.aspect);
-      if (left) {
+    if ('left' in cut || 'right' in cut) {
+      const pri = 'left' in cut ? cut.left : cut.right;
+      const priW = Math.round('pct' in pri ? w * pri.pct : h * pri.aspect);
+      if ('left' in cut) {
         box1 = { x, y, w: priW, h };
         box2 = { x: x + priW + lineWidth, y, w: w - priW - lineWidth, h };
       } else {
@@ -254,8 +353,8 @@
         box2 = { x, y, w: w - priW - lineWidth, h };
       }
     } else {
-      pri = top || bottom;
-      const priH = Math.round(pri.pct ? h * pri.pct : w / pri.aspect);
+      const pri = 'top' in cut ? cut.top : cut.bottom;
+      const priH = Math.round('pct' in pri ? h * pri.pct : w / pri.aspect);
       if (top) {
         box1 = { x, y, w, h: priH };
         box2 = { x, y: y + priH + lineWidth, w, h: h - priH - lineWidth };
@@ -269,29 +368,7 @@
     boxes.push(box1, box2);
   }
 
-  // convert templates from {
-  //   name: string,
-  //   cuts: { box: number, (top | left | right)?: { pct: number } }[],
-  //   buffer?: 'top'
-  // } to {
-  //   name: string,
-  //   boxes: { top: string, left: string, width: string, height: string }[],
-  // }
-  templates.forEach(({ name, cuts, buffer }, i) => {
-    const y = buffer === 'top' ? bufferSize : 0;
-    const boxes = [{ x: 0, y, w: matteWidth, h: matteHeight }];
-    cuts.forEach(cut => cutBox(boxes, cut));
-    templates[i] = {
-      name,
-      boxes: boxes.map(({ x, y: top, w, h }) => ({
-        top: `${top}px`,
-        left: `${x}px`,
-        width: `${w}px`,
-        height: `${h}px`,
-      })),
-    };
-  });
-
+  /** @param {string} arg */
   function escapeShellArg(arg) {
     const esc1 = `'${arg.replace(/'/g, "'\\''")}'`;
     const esc2 = `"${arg.replace(/([!$"\\])/g, '\\$1')}"`;
@@ -299,6 +376,10 @@
     return [esc1, esc2, esc3].sort((a, b) => a.length - b.length)[0];
   }
 
+  /**
+   * @param {TemplateStringsArray} strs
+   * @param  {...(string | number)} vals
+   */
   function oneLine(strs, ...vals) {
     vals.push('');
     return strs
@@ -306,9 +387,13 @@
       .join('');
   }
 
+  /*
+   * @param {string} [outFile]
+   */
   function generateConvert(outFile = 'out.png') {
     const metricsArgs = Object.values(metrics)
       .map(f => {
+        if (!f) throw new Error('wtf'); // make TS happy
         let caption = '';
         if (f.caption) {
           const txt = f.caption.trim().replace(/\n/g, '\\n');
@@ -368,6 +453,7 @@
     `.trim();
   }
 
+  /** @param {string} outFile */
   async function runConvert(outFile) {
     // TODO: change command generator to return array, and escape on-the-fly
     // instead of using exec() here
@@ -386,10 +472,10 @@
 
   $(() => {
     $('#file').change(e => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const { files } = /** @type {HTMLInputElement} */ (e.target);
+      if (!files) return;
       $('#file').val('');
-      loadFileToBox(relativePath(file.path, saveFile));
+      loadFileToBox(relativePath(files[0].path, saveFile));
     });
 
     // startup
@@ -428,6 +514,10 @@
   ipcRenderer.on('save', () => {
     if (saveFile) saveConfigToFile();
     else ipcRenderer.send('saveAs');
+  });
+
+  ipcRenderer.on('open', () => {
+    ipcRenderer.send('open', saveFile);
   });
 
   ipcRenderer.on('load', (ev, filePath) => {
