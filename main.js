@@ -91,11 +91,15 @@ function sendLoadConfig(win, filePath) {
   return win.webContents.send('load', filePath);
 }
 
-/** @param {BrowserWindow} win */
-async function handleLoadConfig(win) {
+/**
+ * @param {BrowserWindow} win
+ * @param {string | null} defaultPath
+ */
+async function handleLoadConfig(win, defaultPath) {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
-    title: 'Load Matte Config',
+    title: 'Open Matte Config',
     filters: configFilters,
+    defaultPath: defaultPath || undefined,
     properties: ['openFile'],
   });
   if (!canceled) await sendLoadConfig(win, filePaths[0]);
@@ -142,6 +146,10 @@ async function createMenus(win) {
     if (menuItem) menuItem.checked = true;
   });
 
+  ipcMain.on('open', (ev, defaultPath) => {
+    handleLoadConfig(win, defaultPath);
+  });
+
   const fontList = await listBoldFonts();
   const fallbackFont = fontList[0];
   ipcMain.on('font', async (ev, id) => {
@@ -178,7 +186,7 @@ async function createMenus(win) {
             label: 'Open Matte Config...',
             id: 'load',
             accelerator: 'CommandOrControl+O',
-            click: () => handleLoadConfig(win),
+            click: () => win.webContents.send('open'),
           },
           {
             label: 'Save Matte Config',

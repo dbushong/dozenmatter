@@ -516,6 +516,10 @@
     else ipcRenderer.send('saveAs');
   });
 
+  ipcRenderer.on('open', () => {
+    ipcRenderer.send('open', saveFile);
+  });
+
   ipcRenderer.on('load', (ev, filePath) => {
     loadConfigFromFile(filePath);
   });
