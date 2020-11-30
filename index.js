@@ -10,7 +10,7 @@
   } = require('path');
   const { writeFileSync, readFileSync, statSync } = require('fs');
   const { promisify } = require('util');
-  const exec = promisify(require('child_process').exec);
+  const execFile = promisify(require('child_process').execFile);
 
   // eslint-disable-next-line import/no-extraneous-dependencies
   const { ipcRenderer, clipboard } = require('electron');
@@ -376,81 +376,94 @@
     return [esc1, esc2, esc3].sort((a, b) => a.length - b.length)[0];
   }
 
-  /**
-   * @param {TemplateStringsArray} strs
-   * @param  {...(string | number)} vals
-   */
-  function oneLine(strs, ...vals) {
-    vals.push('');
-    return strs
-      .map(s => `${s.replace(/\n[\n\s]*/g, ' ')}${vals.shift()}`)
-      .join('');
-  }
-
   /*
    * @param {string} [outFile]
    */
-  function generateConvert(outFile = 'out.png') {
+  function generateConvertArgs(outFile = 'out.png') {
     const metricsArgs = Object.values(metrics)
       .map(f => {
         if (!f) throw new Error('wtf'); // make TS happy
-        let caption = '';
+        /** @type {string[]} */
+        let caption = [];
         if (f.caption) {
           const txt = f.caption.trim().replace(/\n/g, '\\n');
-          caption = oneLine`
-          \\(
-            -background none
-            -size ${Math.round(f.width * 0.85)}x225
-            xc:none
-            -stroke none
-            -fill white
-            -gravity south
-            -annotate 0 ${escapeShellArg(txt)}
-            -fill black
-            \\(
-              +clone
-              -shadow 100x6+0+0
-            \\)
-            +swap
-            \\(
-              +clone
-              -shadow 90x12+0+0
-            \\)
-            +swap
-            \\(
-              +clone
-              -shadow 80x20+0+0
-            \\)
-            +swap
-            -layers merge
-            +repage
-          \\)
-          -gravity south
-          -geometry +0+0
-          -composite
-        `;
+          caption = [
+            '(',
+            '-background',
+            'none',
+            '-size',
+            `${Math.round(f.width * 0.85)}x225`,
+            'xc:none',
+            '-stroke',
+            'none',
+            '-fill',
+            'white',
+            '-gravity',
+            'south',
+            '-annotate',
+            '0',
+            txt,
+            '-fill',
+            'black',
+            '(',
+            '+clone',
+            '-shadow',
+            '100x6+0+0',
+            ')',
+            '+swap',
+            '(',
+            '+clone',
+            '-shadow',
+            '90x12+0+0',
+            ')',
+            '+swap',
+            '(',
+            '+clone',
+            '-shadow',
+            '80x20+0+0',
+            ')',
+            '+swap',
+            '-layers',
+            'merge',
+            '+repage',
+            ')',
+            '-gravity',
+            'south',
+            '-geometry',
+            '+0+0',
+            '-composite',
+          ];
         }
-        return oneLine`\\(
-         ${escapeShellArg(absolutePath(f.path, saveFile))}
-         -normalize
-         -crop ${f.crop.cropW}x${f.crop.cropH}+${f.crop.cropX}+${f.crop.cropY}
-         -resize ${f.width}x${f.height} ${caption}
-       \\)
-       -gravity northwest
-       -geometry +${f.pos.left}+${f.pos.top}
-       -composite
-      `;
+        return [
+          '(',
+          absolutePath(f.path, saveFile),
+          '-normalize',
+          '-crop',
+          `${f.crop.cropW}x${f.crop.cropH}+${f.crop.cropX}+${f.crop.cropY}`,
+          '-resize',
+          `${f.width}x${f.height}`,
+          ...caption,
+          ')',
+          '-gravity',
+          'northwest',
+          '-geometry',
+          `+${f.pos.left}+${f.pos.top}`,
+          '-composite',
+        ];
       })
-      .join(' ');
-    return oneLine`
-      convert
-        -size ${matteWidth}x${matteFullHeight}
-        -font ${imFontName}
-        -pointsize 72
-        xc:black
-        ${metricsArgs}
-        ${escapeShellArg(outFile)}
-    `.trim();
+      .flat(1);
+
+    return [
+      '-size',
+      `${matteWidth}x${matteFullHeight}`,
+      '-font',
+      imFontName,
+      '-pointsize',
+      '72',
+      'xc:black',
+      ...metricsArgs,
+      outFile,
+    ];
   }
 
   /** @param {string} outFile */
@@ -459,7 +472,7 @@
     // instead of using exec() here
     try {
       flashNotice(`Exporting PNG to ${outFile}, please wait...`);
-      const res = await exec(generateConvert(outFile));
+      const res = await execFile('convert', generateConvertArgs(outFile));
       const withWarnings = res.stderr ? ` with warnings: ${res.stderr}` : '';
       flashNotice(`Exported PNG to ${outFile}${withWarnings}`);
     } catch (err) {
@@ -474,8 +487,9 @@
     $('#file').change(e => {
       const { files } = /** @type {HTMLInputElement} */ (e.target);
       if (!files) return;
+      const [{ path }] = files;
       $('#file').val('');
-      loadFileToBox(relativePath(files[0].path, saveFile));
+      loadFileToBox(relativePath(path, saveFile));
     });
 
     // startup
@@ -489,12 +503,17 @@
   });
 
   ipcRenderer.on('template', (sender, i) => {
-    loadTemplate(i);
+    curTemplate = i;
     autoSaveConfig();
+    loadTemplate(i);
+    autoLoadConfig();
   });
 
   ipcRenderer.on('copy', () => {
-    clipboard.writeText(generateConvert(), 'selection');
+    const cmdLine = `convert ${generateConvertArgs()
+      .map(escapeShellArg)
+      .join(' ')}`;
+    clipboard.writeText(cmdLine, 'selection');
     flashNotice('Copied convert command to clipboard');
   });
 

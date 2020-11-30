@@ -27,7 +27,7 @@
   "license": "MIT",
   "main": "main.js",
   "engines": {
-    "node": ">=10.12.0"
+    "node": ">=12.18.3"
   },
   "scripts": {
     "watch-stylus": "stylus -w index.styl",
