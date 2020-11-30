@@ -129,6 +129,12 @@ function menuItemsIf(condition, items) {
   return condition ? items : [];
 }
 
+/** @param {number} i */
+function setTemplate(i) {
+  const menuItem = getMenuItem(`tmpl${i}`);
+  if (menuItem) menuItem.checked = true;
+}
+
 /** @param {BrowserWindow} win */
 async function createMenus(win) {
   ipcMain.on('infoBox', (ev, opts) => {
@@ -141,10 +147,7 @@ async function createMenus(win) {
 
   ipcMain.on('saveAs', () => handleSaveConfigAs(win));
 
-  ipcMain.on('template', (ev, i) => {
-    const menuItem = getMenuItem(`tmpl${i}`);
-    if (menuItem) menuItem.checked = true;
-  });
+  ipcMain.on('template', (ev, i) => setTemplate(i));
 
   ipcMain.on('open', (ev, defaultPath) => {
     handleLoadConfig(win, defaultPath);
@@ -177,7 +180,10 @@ async function createMenus(win) {
             label: 'New Matte',
             accelerator: 'CommandOrControl+N',
             id: 'new',
-            click: () => win.webContents.send('new'),
+            click: () => {
+              setTemplate(0);
+              win.webContents.send('new');
+            },
           },
 
           { type: 'separator' },
