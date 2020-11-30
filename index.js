@@ -264,8 +264,7 @@
       /** @type {JQuery<HTMLElement> & { cropbox(opts: any): JQuery<HTMLElement>}} */
       ($('<img>').attr('src', absolutePath(path, saveFile)).appendTo($box));
     const key = /** @type {keyof Metrics} */ ($box.attr('id'));
-    const box = metrics[key];
-    if (!box) throw new Error(`invalid id: ${key}`);
+    const box = metrics[key]; // set iff we're loading/restoring
     const pos = $box.position();
     $img
       .cropbox({
@@ -274,7 +273,7 @@
         zoom: 65e7 / width / height,
         controls: false,
         showControls: 'never',
-        result: box.crop,
+        result: box && box.crop,
       })
       .on('cropbox', (ce, crop) => {
         metrics[key] = {
@@ -292,10 +291,14 @@
       .appendTo($box)
       .on('keyup', function onTAKeyup() {
         resetCaptionHeight(this);
-        box.caption = /** @type {string} */ ($(this).val());
+        const croppedBox = metrics[key];
+        if (!croppedBox) {
+          throw new Error(`cropbox failed to init metrics for ${key}`);
+        }
+        croppedBox.caption = /** @type {string} */ ($(this).val());
         autoSaveConfig();
       });
-    $ta.val(box.caption || '');
+    $ta.val((box && box.caption) || '');
     resetCaptionHeight($ta[0]);
   }
 
