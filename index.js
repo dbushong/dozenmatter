@@ -487,8 +487,9 @@
     $('#file').change(e => {
       const { files } = /** @type {HTMLInputElement} */ (e.target);
       if (!files) return;
+      const [{ path }] = files;
       $('#file').val('');
-      loadFileToBox(relativePath(files[0].path, saveFile));
+      loadFileToBox(relativePath(path, saveFile));
     });
 
     // startup
