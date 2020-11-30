@@ -42,10 +42,11 @@ $ npm start
 
 ### Releasing
 
-Open a PR, get the PR merged to master, pull master locally, then:
+From `master`:
 
 ```
-$ git tag vX.Y.Z && git push origin tag vX.Y.Z
+$ ./scripts/release minor
+# (or patch or major)
 ```
 
 Then go to https://github.com/dbushong/dozenmatter/releases , click on the
