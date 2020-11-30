@@ -503,8 +503,10 @@
   });
 
   ipcRenderer.on('template', (sender, i) => {
-    loadTemplate(i);
+    curTemplate = i;
     autoSaveConfig();
+    loadTemplate(i);
+    autoLoadConfig();
   });
 
   ipcRenderer.on('copy', () => {
