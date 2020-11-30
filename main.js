@@ -34,6 +34,7 @@ function createWindow() {
       nodeIntegration: true,
     },
     resizable: false,
+    icon: `${__dirname}/build/icon.png`,
   });
 
   win.loadFile(pathJoin(__dirname, 'index.html'));

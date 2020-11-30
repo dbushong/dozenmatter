@@ -3,3 +3,4 @@
 .*.swp
 *.js.map
 /*-x64
+/dist
