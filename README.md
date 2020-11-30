@@ -1,4 +1,4 @@
-# dozenmatter
+# dozenmatter <img src="/build/icon.png" width=24 height=24 />
 
 This is a utility to simplify matting a bunch of photos (or other images).
 It is implemented as a standalone Electron app, which you can download and
