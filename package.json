@@ -29,6 +29,13 @@
   "engines": {
     "node": ">=12.18.3"
   },
+  "files": [
+    "build/icon.png",
+    "vendor",
+    "*.js",
+    "*.html",
+    "*.css"
+  ],
   "scripts": {
     "watch-stylus": "stylus -w index.styl",
     "start": "electron .",
