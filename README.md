@@ -49,7 +49,8 @@ $ ./scripts/release minor
 # (or patch or major)
 ```
 
-Then go to https://github.com/dbushong/dozenmatter/releases , click on the
+Then wait for CI to finish running, then go to
+https://github.com/dbushong/dozenmatter/releases , click on the
 Draft release, name it `vX.Y.Z`, and Publish it
 
 ## Credits
