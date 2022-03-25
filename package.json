@@ -47,7 +47,7 @@
   "devDependencies": {
     "@types/jquery": "^3.5.4",
     "@types/node": "^10.17.47",
-    "electron": "^11.1.0",
+    "electron": "^13.6.6",
     "electron-builder": "^22.9.1",
     "eslint": "^7.0.0",
     "eslint-config-groupon": "^10.0.1",
